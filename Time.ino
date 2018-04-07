@@ -235,10 +235,11 @@ int LastDayOfMonth (int monat, int jahr) {
 void checkDst() {
   // check the beginn of daylight saving time
   if (weekday() == 1 && month() == 3 && day() >= 25 && day() <= 31 && hour() == 2 && DST == false) {
-    //  //setclockto 3 am;
+    // setclockto 3 am;
     adjustTime(3600); // Adjust system time by adding the adjustment value
     DST = true;
     EEPROM_write_boolean(EEPROM_ADDR_DST, DST);      // write boolean at address
+    DS1307_setTime();                                // set date and time to DS1307
     appendLogFile("Summertime");
     if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
       Serial.println("Switch to summertime!");
@@ -246,10 +247,11 @@ void checkDst() {
   }
   // check the end of daylight saving time
   if (weekday() == 1 && month() == 10 && day() >= 25 && day() <= 31 && hour() == 3 && DST == true) {
-    //setclockto 2 am;
+    // setclockto 2 am;
     adjustTime(-3600); // Adjust system time by adding the adjustment value
     DST = false;
     EEPROM_write_boolean(EEPROM_ADDR_DST, DST);      // write boolean at address
+    DS1307_setTime();                                // set date and time to DS1307
     appendLogFile("Normaltime");
     if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
       Serial.println("It is Normaltime!");

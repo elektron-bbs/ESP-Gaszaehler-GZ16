@@ -14,6 +14,9 @@
   #endif
 
   Der Sketch verwendet 414768 Bytes (39%) des Programmspeicherplatzes. Das Maximum sind 1044464 Bytes.
+  Globale Variablen verwenden 41856 Bytes (51%) des dynamischen Speichers, 40064 Bytes für lokale Variablen verbleiben. Das Maximum sind 81920 Bytes.
+  Arduino 1.8.5 - ESP_Gaszaehler_V1_84_DST - Nach Umschaltung Sommerzeit Uhrzeit in RTC speichern
+  Der Sketch verwendet 414768 Bytes (39%) des Programmspeicherplatzes. Das Maximum sind 1044464 Bytes.
   Globale Variablen verwenden 41872 Bytes (51%) des dynamischen Speichers, 40048 Bytes für lokale Variablen verbleiben. Das Maximum sind 81920 Bytes.
   Arduino 1.8.4 - ESP_Gaszaehler_V1_82_Debounce
   Der Sketch verwendet 414760 Bytes (39%) des Programmspeicherplatzes. Das Maximum sind 1044464 Bytes.
