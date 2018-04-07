@@ -1,31 +1,77 @@
 void Interrupt_Button() {
-  unsigned long interrupt_time = millis();
-  if (interrupt_time - last_interrupt_time_button > 200) {
-    last_interrupt_time_button = interrupt_time;
-    ButtonPressTime = 0;
-    ButtonPressCount++;             // increase button press count
-    digitalWrite(LED_red, LOW) ;    // LED ein
+  int reading = digitalRead(Input_Button);      // Get the pin reading.
+  if (reading == Button_Input_State) return;    // Ignore dupe readings.
+  boolean debounce = false;
+  // Check to see if the change is within a debounce delay threshold.
+  if ((millis() - Button_last_debounce_time) <= Button_debounce_delay) {
+    debounce = true;
+  }
+  // This update to the last debounce check is necessary regardless of debounce state.
+  Button_last_debounce_time = millis();
+  if (debounce) return;                   // Ignore reads within a debounce delay threshold.
+  Button_Input_State = reading;           // All is good, persist the reading as the state.
+  if (Button_Input_State == 0) {          // Botton pressed
+    Button_Press_Time = 0;
+    Button_Press_Count++;                 // increase button press count
+    digitalWrite(LED_red, LOW) ;          // LED ein
     if (SerialOutput == 1) {        // serielle Ausgabe eingeschaltet
       Serial.print(F("Button pressed #"));
-      Serial.println(ButtonPressCount);
+      Serial.println(Button_Press_Count);
     }
   }
 }
 
+//void Interrupt_Button() {
+//  unsigned long interrupt_time = millis();
+//  if (interrupt_time - last_interrupt_time_button > 200) {
+//    last_interrupt_time_button = interrupt_time;
+//    Button_Press_Time = 0;
+//    Button_Press_Count++;             // increase button press count
+//    digitalWrite(LED_red, LOW) ;    // LED ein
+//    if (SerialOutput == 1) {        // serielle Ausgabe eingeschaltet
+//      Serial.print(F("Button pressed #"));
+//      Serial.println(Button_Press_Count);
+//    }
+//  }
+//}
+
 void Interrupt_S0() {
-  unsigned long interrupt_time = millis();
-  //  if (interrupt_time - last_interrupt_time_S0 > 200) {
-  if (interrupt_time - last_interrupt_time_S0 > 3000) {
-    last_interrupt_time_S0 = interrupt_time;
-    s0_count_abs++;                // increase S0-Counter
-    s0_count_mqtt++;               // increase S0-Counter MQTT
-    s0_count_hour++;               // increase S0-Counter hour
-    s0_count_day++;                // increase S0-Counter day
-    s0_count_month++;              // increase S0-Counter month
-    s0_count_year++;               // increase S0-Counter year
-    S0_count_changed = true;       // S0-Counts changed
+  int reading = digitalRead(Input_S0_Count);  // Get the pin reading.
+  if (reading == S0_Input_State) return;      // Ignore dupe readings.
+  boolean debounce = false;
+  // Check to see if the change is within a debounce delay threshold.
+  if ((millis() - S0_last_debounce_time) <= S0_debounce_delay) {
+    debounce = true;
+  }
+  // This update to the last debounce check is necessary regardless of debounce state.
+  S0_last_debounce_time = millis();
+  if (debounce) return;             // Ignore reads within a debounce delay threshold.
+  S0_Input_State = reading;         // All is good, persist the reading as the state.
+  if (S0_Input_State == 0) {        // S0-Pulse finished
+    s0_count_abs++;                 // increase S0-Counter
+    s0_count_mqtt++;                // increase S0-Counter MQTT
+    s0_count_hour++;                // increase S0-Counter hour
+    s0_count_day++;                 // increase S0-Counter day
+    s0_count_month++;               // increase S0-Counter month
+    s0_count_year++;                // increase S0-Counter year
+    S0_count_changed = true;        // S0-Counts changed
   }
 }
+
+//void Interrupt_S0() {
+//  unsigned long interrupt_time = millis();
+//  //  if (interrupt_time - S0_last_debounce_time > 200) {
+//  if (interrupt_time - S0_last_debounce_time > 3000) {
+//    S0_last_debounce_time = interrupt_time;
+//    s0_count_abs++;                // increase S0-Counter
+//    s0_count_mqtt++;               // increase S0-Counter MQTT
+//    s0_count_hour++;               // increase S0-Counter hour
+//    s0_count_day++;                // increase S0-Counter day
+//    s0_count_month++;              // increase S0-Counter month
+//    s0_count_year++;               // increase S0-Counter year
+//    S0_count_changed = true;       // S0-Counts changed
+//  }
+//}
 
 String WebsiteStatistikJahreszeiten(String str, byte monat, long s0_count_ges_int, int tage, String ye) {
   if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet

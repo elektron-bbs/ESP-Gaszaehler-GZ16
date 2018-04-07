@@ -2,7 +2,6 @@
   Bibliotheken installieren:
   --------------------------
   Time          by Michael Margolis
-  Bounce2       by Thomas O Fredericks
 
   PubSubClient  by Nick O'Leary
   UB: mosquitto MQTT v3.1 broker on debian wheezy - Änderung notwendig!
@@ -14,6 +13,16 @@
   #define MQTT_VERSION MQTT_VERSION_3_1_1
   #endif
 
+  Der Sketch verwendet 414768 Bytes (39%) des Programmspeicherplatzes. Das Maximum sind 1044464 Bytes.
+  Globale Variablen verwenden 41872 Bytes (51%) des dynamischen Speichers, 40048 Bytes für lokale Variablen verbleiben. Das Maximum sind 81920 Bytes.
+  Arduino 1.8.4 - ESP_Gaszaehler_V1_82_Debounce
+  Der Sketch verwendet 414760 Bytes (39%) des Programmspeicherplatzes. Das Maximum sind 1044464 Bytes.
+  Globale Variablen verwenden 41856 Bytes (51%) des dynamischen Speichers, 40064 Bytes für lokale Variablen verbleiben. Das Maximum sind 81920 Bytes.
+  Der Sketch verwendet 414744 Bytes (39%) des Programmspeicherplatzes. Das Maximum sind 1044464 Bytes.
+  Globale Variablen verwenden 41856 Bytes (51%) des dynamischen Speichers, 40064 Bytes für lokale Variablen verbleiben. Das Maximum sind 81920 Bytes.
+  Der Sketch verwendet 414740 Bytes (39%) des Programmspeicherplatzes. Das Maximum sind 1044464 Bytes.
+  Globale Variablen verwenden 41852 Bytes (51%) des dynamischen Speichers, 40068 Bytes für lokale Variablen verbleiben. Das Maximum sind 81920 Bytes.
+  Arduino 1.8.3 - ESP_Gaszaehler_V1_82_Debounce (neue Debounce-Routinen, GZ16 zählte immer noch zu viele Impulse)
   Der Sketch verwendet 414688 Bytes (39%) des Programmspeicherplatzes. Das Maximum sind 1044464 Bytes.
   Globale Variablen verwenden 41848 Bytes (51%) des dynamischen Speichers, 40072 Bytes für lokale Variablen verbleiben. Das Maximum sind 81920 Bytes.
   Arduino 1.8.3 - ESP_Gaszaehler_V1_81_MQTT

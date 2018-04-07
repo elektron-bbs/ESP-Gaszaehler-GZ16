@@ -23,9 +23,10 @@ const float ADC_DIV = 190.0;        // Divisor für Batteriespannung bei HW-Vers
 #endif
 
 #define VERSION                     1
-#define BUILD                       81
+#define BUILD                       82
 #define DEBUG_OUTPUT                false
 //#define DEBUG_OUTPUT                true
+
 // EEPROM Size
 #define EEPROM_MIN_ADDR             0
 #define EEPROM_MAX_ADDR             1024
@@ -75,11 +76,15 @@ const char compile_file[] = __FILE__;
 //Pins for input, GPIO15 geht nicht
 #define Input_Button      2     // Pin connected to WPS-Button
 #define Input_S0_Count    13    // Pin connected to S0 Input
-volatile int ButtonPressCount;
-volatile int ButtonPressTime;
-volatile unsigned long last_interrupt_time_button = 0;
 
-//RTC DS1307
+// Button
+volatile int Button_Press_Count;              // count button is pressed
+volatile int Button_Press_Time;               // time for pressing button
+volatile int Button_Input_State = 1;          // Holds the current input state.
+volatile long Button_last_debounce_time = 0;  // Holds the last time debounce was evaluated (in millis).
+#define Button_debounce_delay   30            // The delay threshold for debounce checking (in millis).
+
+// RTC DS1307
 #define I2C_SDA_Pin                 5
 #define I2C_SCL_Pin                 4
 #define DS1307_ADDRESS              0x68  // 7 Bit
@@ -137,7 +142,7 @@ unsigned long lastSetTime;
 int sec_old;
 unsigned long uptime;
 
-//Gas counter
+// Gas counter
 volatile long s0_count_abs;                  // S0-Counter absolut
 volatile long s0_count_mqtt;                 // S0-Counter Moment for MQTT
 volatile long s0_count_hour;                 // S0-Counter hour
@@ -145,18 +150,19 @@ volatile long s0_count_day;                  // S0-Counter day
 volatile long s0_count_month;                // S0-Counter month
 volatile long s0_count_year;                 // S0-Counter year
 volatile boolean S0_count_changed = false;   // S0-Counts changed
-volatile unsigned long last_interrupt_time_S0 = 0;
+volatile long S0_last_debounce_time = 0;     // last time debounce was evaluated (in millis).
+volatile int S0_Input_State = 1;             // Holds the current input state.
+#define S0_debounce_delay   300              // The delay threshold for debounce checking (in millis).
 long s0_count_max_day;                       // Maximum pro Tag
 long s0_count_max_month;                     // Maximum pro Monat
 long s0_count_max_year;                      // Maximum pro Jahr
 
+// Misc
+boolean SerialOutput;   // serielle Ausgabe ein/aus
 long DiagrammTimestamp;
 
-//Misc
-boolean SerialOutput;   // serielle Ausgabe ein/aus
-
 void setup (void) {
-  //set pins to output
+  // set pins to output
   pinMode(LED_yellow, OUTPUT);
   pinMode(LED_green, OUTPUT);
   pinMode(LED_red, OUTPUT);
@@ -167,9 +173,9 @@ void setup (void) {
 
   // set pins to input
   pinMode(Input_Button, INPUT);     // Eingang Taster
-  attachInterrupt(Input_Button, Interrupt_Button, FALLING);
+  attachInterrupt(Input_Button, Interrupt_Button, CHANGE);
   pinMode(Input_S0_Count, INPUT);   // Eingang S0-Count
-  attachInterrupt(Input_S0_Count, Interrupt_S0, FALLING);
+  attachInterrupt(Input_S0_Count, Interrupt_S0, CHANGE);
 
   // start serial
   Serial.begin(115200);
@@ -343,15 +349,12 @@ void loop ( void ) {
   // Perform regular checks, 1 time/sec
   if (second() != sec_old) {
     sec_old = second();
-    if (ButtonPressCount > 0) {
-      ButtonPressTime += 1;
+    if (Button_Press_Count > 0) {
+      Button_Press_Time++;                            // increase timer
       digitalWrite(LED_red, !digitalRead(LED_red));   // LED toggle
-      if (ButtonPressTime >= 3) {
-        switch (ButtonPressCount) {
+      if (Button_Press_Time > 5) {
+        switch (Button_Press_Count) {
           case 3:   // Taster 3x betätigt - WPS starten
-            ButtonPressCount = 0;
-            ButtonPressTime = 0;
-            digitalWrite(LED_red, HIGH) ;             // LED aus
             // starte WiFi Protected Setup (WPS)
             if (!start_WPS_connect()) {               // Wifi WPS Connection failed
               String logText = F("Wifi WPS connection failed #");
@@ -368,9 +371,6 @@ void loop ( void ) {
             }
             break;
           case 4:   // Taster 4x betätigt - Accesspoint starten
-            ButtonPressCount = 0;
-            ButtonPressTime = 0;
-            digitalWrite(LED_red, HIGH) ;     // LED aus
             WiFi.disconnect();                // disconnect wifi
             delay(100);
             setupAP();                        // Accesspoint starten
@@ -380,12 +380,10 @@ void loop ( void ) {
             delay(100);
             ESP.restart();
             break;
-          default:
-            ButtonPressCount = 0;
-            ButtonPressTime = 0;
-            digitalWrite(LED_red, HIGH) ;     // LED aus
-            break;
         }
+        Button_Press_Count = 0;
+        Button_Press_Time = 0;
+        digitalWrite(LED_red, HIGH) ;             // LED aus
       }
     }
     checkDst();                 // check and switch Daylight Saving Time
@@ -713,8 +711,10 @@ void loop ( void ) {
           if (Datum != DateToString(now())) {
             String logtext = F("SPIFFS Delete old log: ");
             logtext += (FileName);
-            Serial.println(F("Datum nicht identisch"));
-            Serial.println(logtext);
+            if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
+              Serial.println(F("Datum nicht identisch"));
+              Serial.println(logtext);
+            }
 #if DEBUG_OUTPUT == true
             appendLogFile(logtext);
 #endif
