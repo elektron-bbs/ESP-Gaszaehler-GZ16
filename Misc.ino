@@ -1,6 +1,7 @@
 void Interrupt_Button() {
   unsigned long interrupt_time = millis();
   if (interrupt_time - last_interrupt_time_button > 200) {
+    last_interrupt_time_button = interrupt_time;
     ButtonPressTime = 0;
     ButtonPressCount++;             // increase button press count
     digitalWrite(LED_red, LOW) ;    // LED ein
@@ -9,13 +10,13 @@ void Interrupt_Button() {
       Serial.println(ButtonPressCount);
     }
   }
-  last_interrupt_time_button = interrupt_time;
 }
 
 void Interrupt_S0() {
   unsigned long interrupt_time = millis();
-//  if (interrupt_time - last_interrupt_time_S0 > 200) {
+  //  if (interrupt_time - last_interrupt_time_S0 > 200) {
   if (interrupt_time - last_interrupt_time_S0 > 3000) {
+    last_interrupt_time_S0 = interrupt_time;
     s0_count_abs++;                // increase S0-Counter
     s0_count_mqtt++;               // increase S0-Counter MQTT
     s0_count_hour++;               // increase S0-Counter hour
@@ -23,7 +24,6 @@ void Interrupt_S0() {
     s0_count_month++;              // increase S0-Counter month
     s0_count_year++;               // increase S0-Counter year
     S0_count_changed = true;       // S0-Counts changed
-    last_interrupt_time_S0 = interrupt_time;
   }
 }
 
@@ -38,25 +38,25 @@ String WebsiteStatistikJahreszeiten(String str, byte monat, long s0_count_ges_in
   }
   str += F("<tr><td class=\"rx\" colspan=\"1\">");
   // Jahreszeit und Zeitraum einfügen
-  if ((monat >= 0 && monat <=2) || monat >= 12) {
-      str += F("Winter</td><td class=\"rx\" colspan=\"2\">01.12.");
-      if (month() == 12) {
-        str += year();
-      } else {
-        str += year() - 1;
-      }
+  if ((monat >= 0 && monat <= 2) || monat >= 12) {
+    str += F("Winter</td><td class=\"rx\" colspan=\"2\">01.12.");
+    if (month() == 12) {
+      str += year();
+    } else {
+      str += year() - 1;
+    }
   }
-  if (monat >= 3 && monat <=5) {
-      str += F("Frühling</td><td class=\"rx\" colspan=\"2\">01.03.");
-      str += ye;
+  if (monat >= 3 && monat <= 5) {
+    str += F("Frühling</td><td class=\"rx\" colspan=\"2\">01.03.");
+    str += ye;
   }
-  if (monat >= 6 && monat <=8) {
-      str += F("Sommer</td><td class=\"rx\" colspan=\"2\">01.06.");
-      str += ye;
+  if (monat >= 6 && monat <= 8) {
+    str += F("Sommer</td><td class=\"rx\" colspan=\"2\">01.06.");
+    str += ye;
   }
-  if (monat >= 9 && monat <=11) {
-      str += F("Herbst</td><td class=\"rx\" colspan=\"2\">01.09.");
-      str += ye;
+  if (monat >= 9 && monat <= 11) {
+    str += F("Herbst</td><td class=\"rx\" colspan=\"2\">01.09.");
+    str += ye;
   }
   return str;
 }

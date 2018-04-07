@@ -422,48 +422,63 @@ void SiteSetupMqtt()  {
     Serial.println(countargs);
 #endif
     if (submit == "connect") {                            // Button "Verbinden" betätigt
-      if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-        Serial.print(F("MQTT: Connect to broker: "));
-        Serial.print(qbroker);
-        Serial.print(F(" Port: "));
-        Serial.println(qport);
-      }
-      client.disconnect();                                // Disconnects the client
-      client.setServer(qbroker.c_str(), qport.toInt());   // Sets the server details.
-      if (quser.length() == 0) {                          // no MQTT Username
-        client.connect(OwnStationHostname.c_str());       // Connects the client without authentification
-      } else {
-        client.connect(OwnStationHostname.c_str(), quser.c_str(), qpass.c_str()); // Connects with authentification
-      }
-      if (client.connected()) {     // MQTT Broker connected
-        MqttConnect = true;
-        eMqttBroker = qbroker;                            // MQTT-Broker übernehmen
-        eMqttUsername = quser;                            // MQTT-Username übernehmen
-        eMqttPassword = qpass;                            // MQTT-Password übernehmen
-        eMqttPort = qport.toInt();                        // MQTT-Port übernehmen
-        String logtext = F("MQTT Broker ");
-        logtext += (eMqttBroker);
-        logtext += F(" connected");
+      if (qbroker.length() == 0) {                      // no MQTT Broker given
+        MqttConnect = false;                           // MQTT ausschalten
+        eMqttBroker = "";                            // MQTT-Broker löschen
+        String logtext = F("MQTT disabled");
         appendLogFile(logtext);
         if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
           Serial.println(logtext);
         }
-        client.publish(OwnStationHostname.c_str(), "Connected");      // publish "Connected"
-        EEPROM_write_string(EEPROM_ADDR_MQTTBROKER, eMqttBroker);     // write String to EEPROM
-        EEPROM_write_string(EEPROM_ADDR_MQTTUSERNAME, eMqttUsername); // write String to EEPROM
-        EEPROM_write_string(EEPROM_ADDR_MQTTPASSWORD, eMqttPassword); // write String to EEPROM
-        EEPROM_write_int(EEPROM_ADDR_MQTTPORT, eMqttPort);            // write MQTT Server Port to EEPROM
+        if (client.connected()) {                           // MQTT Broker connected
+          client.disconnect();                                // Disconnects the client
+        }
         EEPROM_write_boolean(EEPROM_ADDR_MQTTCONNECT, MqttConnect);   // write MQTT-Connect
-        appendLogFile(F("MQTT server settings saved"));
-      } else {                                                      // Connects the client Error
-        MqttConnect = false;
-        EEPROM_write_boolean(EEPROM_ADDR_MQTTCONNECT, 0);           // write boolean at address
-        String logtext = F("MQTT connect to ");
-        logtext += (qbroker);
-        logtext += F(" failed");
-        appendLogFile(logtext);
+      } else {
+        MqttConnect = true;                           // MQTT einschalten
         if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-          Serial.println(logtext);
+          Serial.print(F("MQTT: Connect to broker: "));
+          Serial.print(qbroker);
+          Serial.print(F(" Port: "));
+          Serial.println(qport);
+        }
+        if (client.connected()) {                           // MQTT Broker connected
+          client.disconnect();                                // Disconnects the client
+        }
+        client.setServer(qbroker.c_str(), qport.toInt());   // Sets the server details.
+        if (quser.length() == 0) {                          // no MQTT Username
+          client.connect(OwnStationHostname.c_str());       // Connects the client without authentification
+        } else {
+          client.connect(OwnStationHostname.c_str(), quser.c_str(), qpass.c_str()); // Connects with authentification
+        }
+        if (client.connected()) {                           // MQTT Broker connected
+          eMqttBroker = qbroker;                            // MQTT-Broker übernehmen
+          eMqttUsername = quser;                            // MQTT-Username übernehmen
+          eMqttPassword = qpass;                            // MQTT-Password übernehmen
+          eMqttPort = qport.toInt();                        // MQTT-Port übernehmen
+          String logtext = F("MQTT Broker ");
+          logtext += (eMqttBroker);
+          logtext += F(" connected");
+          appendLogFile(logtext);
+          if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
+            Serial.println(logtext);
+          }
+          client.publish(OwnStationHostname.c_str(), "Connected");      // publish "Connected"
+          EEPROM_write_string(EEPROM_ADDR_MQTTBROKER, eMqttBroker);     // write String to EEPROM
+          EEPROM_write_string(EEPROM_ADDR_MQTTUSERNAME, eMqttUsername); // write String to EEPROM
+          EEPROM_write_string(EEPROM_ADDR_MQTTPASSWORD, eMqttPassword); // write String to EEPROM
+          EEPROM_write_int(EEPROM_ADDR_MQTTPORT, eMqttPort);            // write MQTT Server Port to EEPROM
+          EEPROM_write_boolean(EEPROM_ADDR_MQTTCONNECT, MqttConnect);   // write MQTT-Connect
+          appendLogFile(F("MQTT server settings saved"));
+        } else {                                                      // Connects the client Error
+          eMqttBroker = qbroker;                            // MQTT-Broker übernehmen
+          String logtext = F("MQTT connect to ");
+          logtext += (qbroker);
+          logtext += F(" failed");
+          appendLogFile(logtext);
+          if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
+            Serial.println(logtext);
+          }
         }
       }
     }
@@ -500,9 +515,10 @@ void SiteSetupMqtt()  {
   sResponse += F("<tr><td class=\"CXB\" colspan=\"5\">Einstellungen MQTT Server</td></tr>"
                  // Zeile 4 einfügen
                  "<tr><td colspan=\"1\" class=\"r\">MQTT-Broker:</td>"
-                 "<td colspan=\"4\" class=\"l\"><input name=\"broker\" type=\"text\" maxlength=\"64\" value=\"");
+                 "<td colspan=\"1\" class=\"l\"><input name=\"broker\" type=\"text\" maxlength=\"64\" value=\"");
   sResponse += eMqttBroker;
-  sResponse += F("\"></td></tr>"
+  sResponse += F("\"></td>"
+                 "<td colspan=\"3\" class=\"l\">(Name oder Adresse, leer um Dienst abzuschalten)</td></tr>"
                  // Zeile 5 einfügen
                  "<tr><td colspan=\"1\" class=\"r\">Username:</td>"
                  "<td colspan=\"4\" class=\"l\"><input name=\"user\" type=\"text\" maxlength=\"64\" value=\"");
@@ -521,20 +537,24 @@ void SiteSetupMqtt()  {
                  "<td colspan=\"1\"><button type=\"submit\" name=\"submit\" value=\"connect\">Verbinden</button></td>"
                  "</tr>");
   // Zeile 8 einfügen
-  if (webtype == 0) {                          // Station
-    if (client.connected()) {                           // MQTT Broker connected
-      //if (MqttConnect == true) {
-      sResponse += F("<tr><td colspan=\"5\" class=\"c\">MQTT Verbindung hergestellt.</td></tr>");
-    } else {                                            // MQTT Broker not connected
-      sResponse += F("<tr><td colspan=\"5\" class=\"cred\">MQTT Verbindung nicht hergestellt! (Status: ");
-      sResponse += (client.state());
-      sResponse += F(")</td></tr>");
+  if (webtype == 0) {                                     // Station
+    if (MqttConnect == false) {                           // MQTT ausgeschaltet
+      sResponse += F("<tr><td colspan=\"5\" class=\"c\">MQTT ausgeschaltet.</td></tr>");
+    } else {                                              // MQTT eingeschaltet
+      if (client.connected()) {                           // MQTT Broker connected
+        //if (MqttConnect == true) {
+        sResponse += F("<tr><td colspan=\"5\" class=\"c\">MQTT Verbindung hergestellt.</td></tr>");
+      } else {                                            // MQTT Broker not connected
+        sResponse += F("<tr><td colspan=\"5\" class=\"cred\">MQTT Verbindung nicht hergestellt! (Status: ");
+        sResponse += (client.state());
+        sResponse += F(")</td></tr>");
+      }
     }
   } else {                                     // keine Netzwerkverbindung
     sResponse += F("<tr><td colspan=\"5\" class=\"cred\">Keine Verbindung mit Netzwerk!</td></tr>");
   }
   // Zeile 9 einfügen
-  sResponse += F("<tr><td colspan=\"5\" class=\"CXB\">Publizierung durch Gaszähler</td></tr>"
+  sResponse += F("<tr><td colspan=\"5\" class=\"CXB\">Publizierung durch Energiemonitor</td></tr>"
                  // Zeile 10 einfügen
                  "<tr><td colspan=\"1\" class=\"r\">Zählerstand:</td>"
                  "<td colspan=\"1\" class=\"l\"><input name=\"abs\" type=\"checkbox\" value=\"1\"");

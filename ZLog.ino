@@ -14,6 +14,9 @@
   #define MQTT_VERSION MQTT_VERSION_3_1_1
   #endif
 
+  Der Sketch verwendet 414688 Bytes (39%) des Programmspeicherplatzes. Das Maximum sind 1044464 Bytes.
+  Globale Variablen verwenden 41848 Bytes (51%) des dynamischen Speichers, 40072 Bytes für lokale Variablen verbleiben. Das Maximum sind 81920 Bytes.
+  Arduino 1.8.3 - ESP_Gaszaehler_V1_81_MQTT
   Der Sketch verwendet 414444 Bytes (39%) des Programmspeicherplatzes. Das Maximum sind 1044464 Bytes.
   Globale Variablen verwenden 42020 Bytes (51%) des dynamischen Speichers, 39900 Bytes für lokale Variablen verbleiben. Das Maximum sind 81920 Bytes.
   Arduino 1.8.3 - ESP_Gaszaehler_V1_80_UBatt

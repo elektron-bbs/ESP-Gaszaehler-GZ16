@@ -23,7 +23,7 @@ const float ADC_DIV = 190.0;        // Divisor für Batteriespannung bei HW-Vers
 #endif
 
 #define VERSION                     1
-#define BUILD                       80
+#define BUILD                       81
 #define DEBUG_OUTPUT                false
 //#define DEBUG_OUTPUT                true
 // EEPROM Size
@@ -172,7 +172,7 @@ void setup (void) {
   attachInterrupt(Input_S0_Count, Interrupt_S0, FALLING);
 
   // start serial
-  Serial.begin ( 115200 );
+  Serial.begin(115200);
 
   // start I2C
   Wire.begin(I2C_SDA_Pin, I2C_SCL_Pin);
