@@ -23,7 +23,7 @@ const float ADC_DIV = 190.0;        // Divisor für Batteriespannung bei HW-Vers
 #endif
 
 #define VERSION                     1
-#define BUILD                       84
+#define BUILD                       85
 #define DEBUG_OUTPUT                false
 //#define DEBUG_OUTPUT                true
 
@@ -129,6 +129,7 @@ boolean eMqttPublish_s0_count_abs = false;    // MQTT publish S0-Counter absolut
 boolean eMqttPublish_s0_count_mom = false;    // MQTT publish S0-Counter Moment
 boolean eMqttPublish_rssi = false;            // MQTT publish WLAN RSSI
 boolean MqttConnect = false;                  // MQTT connect on/off
+boolean sendMQTT = false;
 
 // Zeit
 const int8_t TimeZone = 1;                    // Europe/Berlin
@@ -156,6 +157,11 @@ volatile int S0_Input_State = 1;             // Holds the current input state.
 long s0_count_max_day;                       // Maximum pro Tag
 long s0_count_max_month;                     // Maximum pro Monat
 long s0_count_max_year;                      // Maximum pro Jahr
+
+// Log
+boolean saveLogYear = false;
+boolean saveLogMonth = false;
+boolean saveLogDayBool = false;
 
 // Misc
 boolean SerialOutput;   // serielle Ausgabe ein/aus
@@ -544,46 +550,51 @@ void loop ( void ) {
     //      }
     //    }
 
-    if (second() == 50) {
+    if (second() >= 40) {
       if ((minute() + 1) % eMqttPublish_Intervall == 0) {      // MQTT publish interval
         if (MqttConnect == true) {                        // MQTT eingeschaltet
-          if (client.state() == 0) {                      // MQTT_CONNECTED - the client is connected
-            char payload[20];
-            String topic;
-            float fl = 0;
-            if (eMqttPublish_s0_count_abs == true) {
-              fl = s0_count_abs / 100.0;                  // Zählerstand absolut
-              dtostrf(fl, 4, 2, payload);     //4 is mininum width, 2 is precision; float value is copied onto buff
-              topic = OwnStationHostname + "/CountAbs";
-              if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-                Serial.print(F("MQTT publish absolute Counter: "));
-                Serial.println(payload);
+          if (sendMQTT == true) {
+            sendMQTT = false;                               // nur einmal ausführen
+            if (client.state() == 0) {                      // MQTT_CONNECTED - the client is connected
+              char payload[20];
+              String topic;
+              float fl = 0;
+              if (eMqttPublish_s0_count_abs == true) {
+                fl = s0_count_abs / 100.0;                  // Zählerstand absolut
+                dtostrf(fl, 4, 2, payload);     //4 is mininum width, 2 is precision; float value is copied onto buff
+                topic = OwnStationHostname + "/CountAbs";
+                if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
+                  Serial.print(F("MQTT publish absolute Counter: "));
+                  Serial.println(payload);
+                }
+                client.publish(topic.c_str(), payload);
               }
-              client.publish(topic.c_str(), payload);
-            }
-            if (eMqttPublish_s0_count_mom == true) {
-              fl = s0_count_mqtt / 100.0;                  // Zählerstand momentan MQTT
-              dtostrf(fl, 4, 2, payload);     //4 is mininum width, 2 is precision; float value is copied onto buff
-              topic = OwnStationHostname + "/CountMom";
-              if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-                Serial.print(F("MQTT publish momentan Counter: "));
-                Serial.println(payload);
+              if (eMqttPublish_s0_count_mom == true) {
+                fl = s0_count_mqtt / 100.0;                  // Zählerstand momentan MQTT
+                dtostrf(fl, 4, 2, payload);     //4 is mininum width, 2 is precision; float value is copied onto buff
+                topic = OwnStationHostname + "/CountMom";
+                if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
+                  Serial.print(F("MQTT publish momentan Counter: "));
+                  Serial.println(payload);
+                }
+                client.publish(topic.c_str(), payload);
+                s0_count_mqtt = 0;                           // reset S0-Counter Moment
               }
-              client.publish(topic.c_str(), payload);
-              s0_count_mqtt = 0;                           // reset S0-Counter Moment
-            }
-            if (eMqttPublish_rssi == true) {
-              topic = OwnStationHostname + "/RSSI";
-              sprintf(payload, "%d", WiFi.RSSI());          // RSSI
-              if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-                Serial.print(F("MQTT publish RSSI: "));
-                Serial.println(payload);
+              if (eMqttPublish_rssi == true) {
+                topic = OwnStationHostname + "/RSSI";
+                sprintf(payload, "%d", WiFi.RSSI());          // RSSI
+                if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
+                  Serial.print(F("MQTT publish RSSI: "));
+                  Serial.println(payload);
+                }
+                client.publish(topic.c_str(), payload);
               }
-              client.publish(topic.c_str(), payload);
             }
           }
         }
       }
+    } else {
+      sendMQTT = true;    // enable send MQTT
     }
 
     // jährliche, monatliche und stündliche Logs schreiben
@@ -591,7 +602,8 @@ void loop ( void ) {
       // jährliche und monatliche Logs schreiben
       if (hour() == 23) {
         // jährliche monatliche Logs schreiben
-        if (second() == 57) {
+        if (second() >= 45 && saveLogYear == true) {
+          saveLogYear = false;      // nur einmal ausführen
           // Werte jeden letzten Tag des Monats in jährliche Dateien schreiben (12 Zeilen pro Datei)
           if (day() == LastDayOfMonth(month(), year())) {     //letzter Tag im Monat
 #if DEBUG_OUTPUT == true
@@ -623,7 +635,8 @@ void loop ( void ) {
         }
 
         // monatliche Logs schreiben
-        if (second() == 58) {
+        if (second() >= 50 && saveLogMonth == true) {
+          saveLogMonth = false;      // nur einmal ausführen
           // Werte jeden Tag in monatliche Dateien schreiben (max 31 Zeilen pro Datei)
 #if DEBUG_OUTPUT == true
           unsigned long startOperation = millis();   // benötigte Rechenzeit für Operation ermitteln (vor Beginn einfügen)
@@ -679,7 +692,8 @@ void loop ( void ) {
       }
 
       // stündliche Logs schreiben
-      if (second() == 59) {
+      if (second() >= 55 && saveLogDayBool == true) {
+        saveLogDayBool = false;      // nur einmal ausführen
         // Werte jede Stunde in tägliche Dateien schreiben (24 Zeilen pro Datei)
 #if DEBUG_OUTPUT == true
         unsigned long startOperation = millis();   // benötigte Rechenzeit für Operation ermitteln (vor Beginn einfügen)
@@ -728,8 +742,11 @@ void loop ( void ) {
         TimeOfOperation(startOperation);   // benötigte Rechenzeit für Operation (nach Ende einfügen)
 #endif
       }
+    } else {
+      saveLogYear = true;
+      saveLogMonth = true;
+      saveLogDayBool = true;
     }
   }
 }
-
 
