@@ -23,7 +23,7 @@ const float ADC_DIV = 190.0;        // Divisor für Batteriespannung bei HW-Vers
 #endif
 
 #define VERSION                     1
-#define BUILD                       82
+#define BUILD                       83
 #define DEBUG_OUTPUT                false
 //#define DEBUG_OUTPUT                true
 
