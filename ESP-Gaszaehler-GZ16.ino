@@ -6,7 +6,6 @@
 #include <FS.h>
 #include <TimeLib.h>
 #include <PubSubClient.h>
-#include <Bounce2.h>
 #include <Wire.h>
 #include <SPI.h>
 extern "C" {
@@ -23,7 +22,7 @@ const float ADC_DIV = 190.0;        // Divisor für Batteriespannung bei HW-Vers
 #endif
 
 #define VERSION                     1
-#define BUILD                       85
+#define BUILD                       86
 #define DEBUG_OUTPUT                false
 //#define DEBUG_OUTPUT                true
 

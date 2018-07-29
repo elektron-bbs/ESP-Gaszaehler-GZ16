@@ -1778,7 +1778,7 @@ void SiteDiagramm_d() {
   unsigned int s0_count_max_int = 0;        // S0-Counter maximum
   float s0_count_max_fl = 0;                // S0-Counter maximum
   unsigned int Faktor = 1;
-  unsigned int s0_count_int_arr[24] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // S0-Counter hour
+  unsigned int s0_count_int_arr[24] = {0};  // S0-Counter hour
   if (day(DiagrammTimestamp) == day()) {
     s0_count_int_arr[hour()] = s0_count_hour;   // S0-Counter Stunde
     s0_count_max_int = s0_count_hour;           // S0-Counter Maximum
@@ -1879,16 +1879,14 @@ void SiteDiagramm_d() {
   sResponse += F("<g stroke=\"#ccc\" stroke-width=\"1\">");
   // Gitterlinien vertikal
   for (int i = 1; i < 24; ++ i) {             // 24 h
-    int xl = i * 28 + 50;                     // x-position x-lines
     sResponse += F("<path d=\"M ");
-    sResponse += xl;                          // x-position x-lines
+    sResponse += i * 28 + 50;                 // x-position x-lines
     sResponse += F(" 25 v 305\"></path>");    // vertikale Linie ab y25 Länge 305
   }
   // Gitterlinien horizontal
   for (int i = 1; i < 10; i += 1) {
-    int yl = 325 - i * 30;                      // y-position y-lines (300 + 25)
     sResponse += F("<path d=\"M 45 ");          // x-position y-lines
-    sResponse += yl;                            // y-position
+    sResponse += 325 - i * 30;                  // y-position y-lines (300 + 25)
     sResponse += F(" h 677\"></path>");         // vertikale Linie Länge 677
   }
   sResponse += F("</g>");                       // Ende Group
@@ -1896,7 +1894,6 @@ void SiteDiagramm_d() {
   // Beschriftung Y-Achse
   sResponse += F("<g text-anchor=\"end\">");
   for (int i = 0; i < 11; i += 1) {
-    int yt = 330 - i * 30;                    // y-position y-text (300 + 25 + 5)
     float yscala = 0.1 * Faktor * i;          // Beschriftung Y-Achse
     String ytext;
     if (Faktor >= 10) {
@@ -1905,7 +1902,7 @@ void SiteDiagramm_d() {
       ytext =  String(yscala, 1);             // using a float and 1 decimal places
     }
     sResponse += F("<text x=\"43\" y=\"");    // x-position y-text
-    sResponse += yt;                          // y-position y-text
+    sResponse += 330 - i * 30;                // y-position y-text (300 + 25 + 5)
     sResponse += F("\">");
     sResponse += ytext;                       // text y-axis
     sResponse += F("</text>");
@@ -1915,11 +1912,10 @@ void SiteDiagramm_d() {
   // Beschriftung X-Achse
   sResponse += F("<g text-anchor=\"middle\">");
   for (int i = 0; i < 24; ++ i) {               // 24h
-    int xt = i * 28 + 64;                       // x-position x-text (50 + 14)
     sResponse += F("<text x=\"");
-    sResponse += xt;                           // x-position
+    sResponse += i * 28 + 64;                   // x-position x-text (50 + 14)
     sResponse += F("\" y=\"345\">");
-    sResponse += i;                            // text x-axis
+    sResponse += i;                             // text x-axis
     sResponse += F("</text>");
   }
   sResponse += F("</g>");                       // Ende Group
@@ -1927,15 +1923,13 @@ void SiteDiagramm_d() {
   // Säulen zeichnen
   sResponse += F("<g fill=\"#ff0\" stroke-width=\"1\" stroke=\"#000\">");
   for (int i = 0; i < 24; ++ i) {                               // 24h
-    int xs = i * 28 + 55;                                       // x-position start Säule (50 + 5)
-    int sh = s0_count_int_arr[i] / Faktor * 3;                // Höhe Säule 3 Pixel pro Digit
+    int sh = s0_count_int_arr[i] / Faktor * 3;                  // Höhe Säule 3 Pixel pro Digit
     s0_count_avg_int = s0_count_avg_int + s0_count_int_arr[i];  // Durchschnitt addieren
     if (sh > 0) {
-      int yb = 325 - sh;                            // y-position start Balken (300 + 25)
       sResponse += F("<rect x=\"");
-      sResponse += xs;                              // x-position start Säule
+      sResponse += i * 28 + 55;                     // x-position start Säule (50 + 5)
       sResponse += F("\" y=\"");
-      sResponse += yb;                              // y-position start Säule
+      sResponse += 325 - sh;                        // y-position start Balken (300 + 25)
       sResponse += F("\" width=\"18\" height=\"");
       sResponse += sh;                              // Säulenhöhe
       sResponse += F("\"></rect>");
@@ -2035,14 +2029,14 @@ void SiteDiagramm_m() {
   String s0_count_str;
   int s0_count_int = 0;
   int s0_count_avg_int = 0;                 // S0-Counter Durchschnitt
-  unsigned int s0_count_max_int = 0;                 // S0-Counter maximum
+  unsigned int s0_count_max_int = 0;        // S0-Counter maximum
   int s0_count_ges_int = 0;                 // S0-Counter gesamt
   float s0_count_max_fl = 0;                // S0-Counter maximum
   int Faktor = 1;
   int AnzahlTage = LastDayOfMonth(month(DiagrammTimestamp), year(DiagrammTimestamp));
-  unsigned int s0_count_int_arr[32] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // S0-Counter
+  unsigned int s0_count_int_arr[32] = {0}; // S0-Counter Tag
   if (month(DiagrammTimestamp) == month()) {
-    s0_count_int_arr[day()] = s0_count_day;     // S0-Counter Tag in Array
+    s0_count_int_arr[day()] = s0_count_day;     // S0-Counter Tag in Array übernehmen
     s0_count_max_int = s0_count_day;            // S0-Counter maximum
     s0_count_ges_int = s0_count_day;            // S0-Counter gesamt
   }
@@ -2054,16 +2048,16 @@ void SiteDiagramm_m() {
       Serial.print(F("SPIFFS Reading Data from: "));
       Serial.println(FileName);
     }
-    File LogFile = SPIFFS.open(FileName, "r"); // Open text file for reading.
+    File LogFile = SPIFFS.open(FileName, "r");    // Open text file for reading.
     while (LogFile.available()) {
-      Line = LogFile.readStringUntil('\n');    //Lets read line by line from the file
+      Line = LogFile.readStringUntil('\n');       //Lets read line by line from the file
       if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
         Serial.println(Line);
       }
-      ye = Line.substring(6, 10);               // String Year
-      yeint = ye.toInt();                       // Integer Year
-      da = Line.substring(0, 2);                // String Tag
-      daint = da.toInt();                       // Integer Tag
+      ye = Line.substring(6, 10);                 // String Year
+      yeint = ye.toInt();                         // Integer Year
+      da = Line.substring(0, 2);                  // String Tag
+      daint = da.toInt();                         // Integer Tag
       Space2 = Line.indexOf(' ', 19);             // nach Uhrzeit folgt Count absolut
       Space3 = Line.indexOf(' ', Space2 + 1 );
       s0_count_str = Line.substring(Space3 + 1);  // liest String bis Zeilenende
@@ -2145,16 +2139,14 @@ void SiteDiagramm_m() {
   sResponse += F("<g stroke=\"#ccc\" stroke-width=\"1\">");
   // Gitterlinien vertikal
   for (int i = 1; i < AnzahlTage; ++ i) {     // Anzahl Tage
-    int xl = i * xa[arindex] + 50;            // x-position x-lines
     sResponse += F("<path d=\"M ");
-    sResponse += xl;                          // x-position x-lines
+    sResponse += i * xa[arindex] + 50;        // x-position x-lines
     sResponse += F(" 25 v 305\"></path>");    // vertikale Linie ab y25 Länge 305
   }
   // Gitterlinien horizontal
   for (int i = 1; i < 10; i += 1) {
-    int yl = 325 - i * 30;                    // y-position y-lines (300 + 25)
     sResponse += F("<path d=\"M 45 ");        // x-position y-lines
-    sResponse += yl;                          // y-position
+    sResponse += 325 - i * 30;                // y-position y-lines (300 + 25)
     sResponse += F(" h ");                    // horizontale Linie
     sResponse += db[arindex] + 5;             // Länge = Diagrammbreite + 5
     sResponse += F("\"></path>");
@@ -2164,16 +2156,15 @@ void SiteDiagramm_m() {
   // Beschriftung Y-Achse
   sResponse += F("<g text-anchor=\"end\">");
   for (int i = 0; i < 11; i += 1) {
-    int yt = 330 - i * 30;           // y-position y-text (300 + 25 + 5)
     float yscala = 0.1 * Faktor * i;          // Beschriftung Y-Achse
     String ytext;
     if (Faktor >= 10) {
-      ytext =  String(yscala, 0);        // using a float and 0 decimal places
+      ytext =  String(yscala, 0);             // using a float and 0 decimal places
     } else {
-      ytext =  String(yscala, 1);        // using a float and 1 decimal places
+      ytext =  String(yscala, 1);             // using a float and 1 decimal places
     }
     sResponse += F("<text x=\"43\" y=\"");
-    sResponse += yt;                          // y-position y-text
+    sResponse += 330 - i * 30;                // y-position y-text (300 + 25 + 5)
     sResponse += F("\">");
     sResponse += ytext;                       // text y-axis
     sResponse += F("</text>");
@@ -2183,9 +2174,8 @@ void SiteDiagramm_m() {
   // Beschriftung X-Achse
   sResponse += F("<g text-anchor=\"middle\">");
   for (int i = 1; i <= AnzahlTage; ++ i) {     // Anzahl Tage
-    int xt = i * xa[arindex] + 39;             // x-position x-text (50 - 11)
     sResponse += F("<text x=\"");
-    sResponse += xt;                           // x-position
+    sResponse += i * xa[arindex] + 39;         // x-position x-text (50 - 11)
     if (i == Saturday) {                       // Sonnabend
       sResponse += F("\" y=\"345\" fill=\"red\">");
       Saturday += 7;
@@ -2203,19 +2193,17 @@ void SiteDiagramm_m() {
   // Säulen zeichnen
   sResponse += F("<g fill=\"#ff0\" stroke-width=\"1\" stroke=\"#000\">");
   for (int i = 1; i <= AnzahlTage; ++ i) {                      // Anzahl Tage
-    int xs = i * xa[arindex] + 45 - sb[arindex];                // x-position start Säule (50 - 5)
     int sh = s0_count_int_arr[i] / Faktor * 3;                  // Höhe Säule 3 Pixel pro Digit
     s0_count_avg_int = s0_count_avg_int + s0_count_int_arr[i];  // Durchschnitt addieren
     if (sh > 0) {
-      int yb = 325 - sh;                        // y-position start Balken (300 + 25)
       sResponse += F("<rect x=\"");
-      sResponse += xs;                          // x-position start Säule
+      sResponse += i * xa[arindex] + 45 - sb[arindex];  // x-position start Säule (50 - 5)
       sResponse += F("\" y=\"");
-      sResponse += yb;                          // y-position start Balken
+      sResponse += 325 - sh;                            // y-position start Balken (300 + 25)
       sResponse += F("\" width=\"");
-      sResponse += sb[arindex];                 // Säulenbreite
+      sResponse += sb[arindex];                         // Säulenbreite
       sResponse += F("\" height=\"");
-      sResponse += sh;                          // Säulenhöhe
+      sResponse += sh;                                  // Säulenhöhe
       sResponse += F("\"></rect>");
     }
   }
@@ -2306,10 +2294,10 @@ void SiteDiagramm_j() {
   int s0_count_int = 0;
   int s0_count_avg_int = 0;                 // S0-Counter Durchschnitt
   int s0_count_ges_int = 0;                 // S0-Counter gesamt
-  unsigned int s0_count_max_int = 0;                 // S0-Counter maximum
+  unsigned int s0_count_max_int = 0;        // S0-Counter maximum
   float s0_count_max_fl = 0;                // S0-Counter maximum
   int Faktor = 1;
-  unsigned int s0_count_int_arr[13] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // S0-Counter Monat
+  unsigned int s0_count_int_arr[13] = {0};  // S0-Counter Monat
   if (year(DiagrammTimestamp) == year()) {            // aktuelles Jahr
     s0_count_int_arr[month()] = s0_count_month;       // S0-Count aktueller Monat übernehmen
     s0_count_max_int = s0_count_month;                // S0-Count aktueller Monat in Maximum übernehmen
@@ -2403,23 +2391,20 @@ void SiteDiagramm_j() {
                  "<g stroke=\"#ccc\" stroke-width=\"1\">");
   // Gitterlinien vertikal
   for (int i = 1; i < 12; ++ i) {             // 12 Monate
-    int xl = i * 56 + 50;                     // x-position x-lines
     sResponse += F("<path d=\"M ");
-    sResponse += xl;                          // x-position x-lines
+    sResponse += i * 56 + 50;                 // x-position x-lines
     sResponse += F(" 25 v 305\"></path>");    // vertikale Linie ab y25 Länge 305
   }
   // Gitterlinien horizontal
   for (int i = 1; i < 10; i += 1) {
-    int yl = 325 - i * 30;                      // y-position y-lines (300 + 25)
     sResponse += F("<path d=\"M 45 ");          // x-position y-lines
-    sResponse += yl;                            // y-position
+    sResponse += 325 - i * 30;                  // y-position y-lines (300 + 25)
     sResponse += F(" h 677\"></path>");         // vertikale Linie Länge 677
   }
   sResponse += F("</g>");                       // Ende Group
   // Beschriftung Y-Achse
   sResponse += F("<g text-anchor=\"end\">");
   for (int i = 0; i < 11; i += 1) {
-    int yt = 330 - i * 30;                      // y-position y-text (300 + 25 + 5)
     float yscala = 0.1 * Faktor * i;            // Beschriftung Y-Achse
     String ytext;
     if (Faktor >= 10) {
@@ -2428,7 +2413,7 @@ void SiteDiagramm_j() {
       ytext =  String(yscala, 1);             // using a float and 1 decimal places
     }
     sResponse += F("<text x=\"43\" y=\"");
-    sResponse += yt;                          // y-position y-text
+    sResponse += 330 - i * 30;                // y-position y-text (300 + 25 + 5)
     sResponse += F("\">");
     sResponse += ytext;                       // text y-axis
     sResponse += F("</text>");
@@ -2438,29 +2423,26 @@ void SiteDiagramm_j() {
   // Beschriftung X-Achse
   sResponse += F("<g text-anchor=\"middle\">");
   for (int i = 0; i < 12; ++ i) {               // 12 Monate
-    int xt = i * 56 + 78;                       // x-position x-text (50+28)
     sResponse += F("<text x=\"");
-    sResponse += xt;                           // x-position
+    sResponse += i * 56 + 78;                   // x-position x-text (50+28)
     sResponse += F("\" y=\"345\">");
-    sResponse += i + 1;                            // text x-axis
+    sResponse += i + 1;                         // text x-axis
     sResponse += F("</text>");
   }
   sResponse += F("</g>");                       // Ende Group
 
   // Säulen zeichnen
   sResponse += F("<g fill=\"#ff0\" stroke-width=\"1\" stroke=\"#000\">");
-  for (int i = 1; i <= 12; ++ i) {                             // 12 Monate
-    int xs = i * 56 - 1;                                       // x-position start Säule (50 + 5 - 56)
-    int sh = s0_count_int_arr[i] / Faktor * 3;                // Höhe Säule 3 Pixel pro Digit
+  for (int i = 1; i <= 12; ++ i) {                              // 12 Monate
+    int sh = s0_count_int_arr[i] / Faktor * 3;                  // Höhe Säule 3 Pixel pro Digit
     s0_count_avg_int = s0_count_avg_int + s0_count_int_arr[i];  // Durchschnitt addieren
     if (sh > 0) {
-      int yb = 325 - sh;                        // y-position start Balken (300 + 25)
       sResponse += F("<rect x=\"");
-      sResponse += xs;                                          // x-position start Säule
+      sResponse += i * 56 - 1;                    // x-position start Säule (50 + 5 - 56)
       sResponse += F("\" y=\"");
-      sResponse += yb;                                          // y-position start Säule
+      sResponse += 325 - sh;                      // y-position start Balken (300 + 25)
       sResponse += F("\" width=\"46\" height=\"");
-      sResponse += sh;                                          // Säulenhöhe
+      sResponse += sh;                            // Säulenhöhe
       sResponse += F("\"></rect>");
     }
   }
@@ -2482,6 +2464,239 @@ void SiteDiagramm_j() {
   // SVG Ende
   sResponse += F("</svg></td></tr>");                                           // end svg
 
+  // Footer anhängen und senden
+  insertFooterSend(sResponse);                    // Footer anhängen und senden
+}
+
+// ############################## Diagramm Jahre ##############################
+void SiteDiagramm_jahre() {
+  String sResponse = "";                        // Response HTML
+  String Button = server.arg("Button");
+  // erste vorhandene Logdatei Jahr ermitteln
+  int FirstYear = year() - 1;
+  String FileName = F("/log/y_");
+  FileName += (FirstYear);
+  FileName += F(".log");
+  if (SerialOutput == 1) {        // serielle Ausgabe eingeschaltet
+    SerialPrintLine();            // Trennlinie seriell ausgeben
+  }
+#if DEBUG_OUTPUT == true
+  Serial.print(F("Search first year: "));
+  Serial.println(FirstYear);
+#endif
+  while (SPIFFS.exists(FileName)) {        // Returns true if a file with given path exists, false otherwise.
+    FirstYear -= 1;
+    FileName = F("/log/y_");
+    FileName += (FirstYear);
+    FileName += F(".log");
+#if DEBUG_OUTPUT == true
+    Serial.print(F("Search first year: "));
+    Serial.println(FirstYear);
+#endif
+  }
+  FirstYear += 1;
+#if DEBUG_OUTPUT == true
+  Serial.print(F("First year: "));
+  Serial.println(FirstYear);
+#endif
+  //  if (countargs == 0) {
+  //  DiagrammTimestamp = now();                                // aktuelle Uhrzeit übernehmen
+  //  } else {
+  //    if (Button == "1") {                                      // Button links
+  //      if (year(DiagrammTimestamp) > FirstYear) {
+  //        if (month(DiagrammTimestamp) > 6) {
+  //          DiagrammTimestamp = DiagrammTimestamp - 31622400;   // - 1 Jahr (366 Tage)
+  //        } else {
+  //          DiagrammTimestamp = DiagrammTimestamp - 31536000;   // - 1 Jahr (365 Tage)
+  //        }
+  //      }
+  //    }
+  //    if (Button == "2") {                                      // Button rechts
+  //      if (year(DiagrammTimestamp) < year()) {
+  //        if (month(DiagrammTimestamp) < 6) {
+  //          DiagrammTimestamp = DiagrammTimestamp + 31622400;   // + 1 Jahr (366 Tage)
+  //        } else {
+  //          DiagrammTimestamp = DiagrammTimestamp + 31536000;   // + 1 Jahr (365 Tage)
+  //        }
+  //      }
+  //    }
+  //  }
+
+  // Read Data from SPIFFS
+  String Line;
+  int Space2;
+  int Space3;
+  String s0_count_str;
+  int s0_count_int = 0;
+  int s0_count_avg_int = 0;                         // S0-Counter Durchschnitt
+  int s0_count_ges_int = 0;                         // S0-Counter gesamt
+  unsigned int s0_count_max_int = 0;                // S0-Counter maximum
+  float s0_count_max_fl = 0;                        // S0-Counter maximum
+  int Faktor = 1;
+  unsigned int s0_count_int_arr[100] = {0};         // S0-Counter für 100 Jahre
+  int CountYear = year() - FirstYear + 1;           // Anzahl Jahre
+  s0_count_int_arr[year() - 2000] = s0_count_month; // S0-Count aktueller Monat übernehmen
+  s0_count_max_int = s0_count_month;                // S0-Count aktueller Monat in Maximum übernehmen
+  s0_count_ges_int = s0_count_month;                // S0-Count aktueller Monat in Gesamt übernehmen
+  // Daten aus Logs übernehmen
+  for (int y = FirstYear; y < year() + 1; y++) {
+    FileName = F("/log/y_");                            // Logdatei Jahr
+    FileName += y;
+    FileName += F(".log");
+    if (SPIFFS.exists(FileName)) {                      // Returns true if a file with given path exists, false otherwise.
+      if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
+        Serial.print(F("SPIFFS Reading Data from: "));
+        Serial.println(FileName);
+      }
+      File LogFile = SPIFFS.open(FileName, "r");        // Open text file for reading.
+      while (LogFile.available()) {
+        Line = LogFile.readStringUntil('\n');           // Lets read line by line from the file
+        if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
+          Serial.println(Line);
+        }
+        Space2 = Line.indexOf(' ', 19);                       // nach Uhrzeit folgt Count absolut
+        Space3 = Line.indexOf(' ', Space2 + 1 );              // nach absulut Count folgt Count
+        s0_count_str = Line.substring(Space3 + 1);            // liest String bis Zeilenende
+        s0_count_int = s0_count_str.toInt();                  // Integer S0-Count momentan
+        s0_count_int_arr[y - 2000] += s0_count_int;           // S0-Count Monat addieren
+        s0_count_ges_int = s0_count_ges_int + s0_count_int;   // S0-Counter gesamt
+        if (s0_count_int_arr[y - 2000] > s0_count_max_int) {
+          s0_count_max_int = s0_count_int_arr[y - 2000];      // S0-Counter Maximum
+        }
+      }
+      LogFile.close();
+      if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
+        Serial.print(F("Gesamt: "));
+        Serial.print(s0_count_int_arr[y - 2000]); // S0-Counter gesamt
+        Serial.print(F(" im Jahr "));
+        Serial.println(y);     // Jahreszahl
+      }
+    } else {
+      if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
+        Serial.print(F("SPIFFS Logile not exist: "));
+        Serial.println(FileName);
+      }
+    }
+  }
+  if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
+    Serial.print(F("Gesamt: "));
+    Serial.print(s0_count_ges_int);     // S0-Counter gesamt
+    Serial.print(F(" in "));
+    Serial.print(CountYear);     // S0-Counter gesamt
+    Serial.println(F(" Jahr(en)"));
+  }
+
+  // Faktor für Skalierung Y-Achse ermitteln
+  s0_count_max_fl = s0_count_max_int / 100.0;
+  while (s0_count_max_int > 100) {
+    s0_count_max_int = s0_count_max_int / 10;
+    Faktor = Faktor * 10;
+  }
+  if (Faktor >= 10) {
+    if (s0_count_max_int < 20) {
+      s0_count_max_int = s0_count_max_int * 5;
+      Faktor = Faktor / 5;
+    }
+    if (s0_count_max_int < 50) {
+      s0_count_max_int = s0_count_max_int * 2;
+      Faktor = Faktor / 2;
+    }
+  }
+
+  // Beginn HTML
+  insertHeaderCSS(sResponse);                       // Header und CCS einfügen
+  sResponse += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"static/buttonxl.css\">");
+  insertMenu_Diagramme(sResponse);                  // Menu Tabelle Zeile 1 einfügen
+  insertMenu_Ueberschrift(sResponse);               // Überschrift Tabelle Zeile 2 einfügen
+
+  sResponse += F("<tr><td class=\"CXB\" colspan=\"5\">Verbrauch pro Jahr</td></tr>"
+                 "<tr><td class=\"c\" colspan=\"5\">");
+
+  // Beginn Diagramm
+  int xDistance = 682 / CountYear;                // Abstand = maximale Breite 682 / Anzahl Jahre
+  int FrameWidth = xDistance * CountYear;         // Anpassung Rahmenbreite an Anzahl Jahre
+  sResponse += F("<svg width=\"735\" height=\"350\">"
+                 // Diagramm Hintergrund hellgrau und Rahmen schwarz Breite 1
+                 "<rect x=\"50\" y=\"25\" width=\"");
+  sResponse += FrameWidth;
+  sResponse += F("\" height=\"300\" fill=\"#f5f5f5\" stroke-width=\"1\" stroke=\"#000\"></rect>"
+                 // Gitterlinien Farbe grau Breite 1
+                 "<g stroke=\"#ccc\" stroke-width=\"1\">");
+  // Gitterlinien vertikal
+  for (int i = 1; i < CountYear; ++ i) {        // Anzahl Jahre
+    sResponse += F("<path d=\"M ");
+    sResponse += i * xDistance + 50;            // x-position x-lines
+    sResponse += F(" 25 v 305\"></path>");      // vertikale Linie ab y25 Länge 305
+  }
+  // Gitterlinien horizontal
+  for (int i = 1; i < 10; i += 1) {
+    sResponse += F("<path d=\"M 45 ");          // x-position y-lines
+    sResponse += 325 - i * 30;                  // y-position y-lines (300 + 25)
+    sResponse += F(" h ");
+    sResponse += FrameWidth + 5;
+    sResponse += F("\"></path>");               // vertikale Linie
+  }
+  sResponse += F("</g>");                       // Ende Group
+  // Beschriftung Y-Achse
+  sResponse += F("<g text-anchor=\"end\">");
+  for (int i = 0; i < 11; i += 1) {
+    float yscala = 0.1 * Faktor * i;           // Beschriftung Y-Achse
+    String ytext;
+    if (Faktor >= 10) {
+      ytext =  String(yscala, 0);              // using a float and 0 decimal places
+    } else {
+      ytext =  String(yscala, 1);              // using a float and 1 decimal places
+    }
+    sResponse += F("<text x=\"43\" y=\"");
+    sResponse += 330 - i * 30;                 // y-position y-text (300 + 25 + 5)
+    sResponse += F("\">");
+    sResponse += ytext;                        // text y-axis
+    sResponse += F("</text>");
+  }
+  sResponse += F("</g>");                      // Ende Group
+  // Beschriftung X-Achse
+  sResponse += F("<g text-anchor=\"middle\">");
+  for (int i = 0; i < CountYear; ++ i) {       // Anzahl Jahre
+    int xt = i * xDistance + 50 + xDistance / 2; // x-position x-text
+    sResponse += F("<text x=\"");
+    sResponse += xt;                           // x-position
+    sResponse += F("\" y=\"345\">");
+    sResponse += FirstYear + i;                // text x-axis
+    sResponse += F("</text>");
+  }
+  sResponse += F("</g>");                       // Ende Group
+  // Säulen zeichnen
+  sResponse += F("<g fill=\"#ff0\" stroke-width=\"1\" stroke=\"#000\">");
+  for (int i = 0; i < CountYear; ++ i) {                                            // Anzahl Jahre
+    int sh = s0_count_int_arr[FirstYear - 2000 + i] / Faktor * 3;                   // Höhe Säule 3 Pixel pro Digit
+    s0_count_avg_int = s0_count_avg_int + s0_count_int_arr[FirstYear - 2000 + i];   // Durchschnitt addieren
+    if (sh > 0) {
+      sResponse += F("<rect x=\"");
+      sResponse += i * xDistance + 55;        // x-position start Säule (50 + 5)
+      sResponse += F("\" y=\"");
+      sResponse += 325 - sh;                  // y-position start Säule (300 + 25)
+      sResponse += F("\" width=\"");
+      sResponse += xDistance - 10;            // Säulenbreite
+      sResponse += F("\" height=\"");
+      sResponse += sh;                        // Säulenhöhe
+      sResponse += F("\"></rect>");
+    }
+  }
+  sResponse += F("</g>");                       // Ende Group
+  // Beschriftung oben Durchschnitt, Maximum, Gesamt
+  sResponse += F("<text x=\"80\" y=\"20\">Durchschnitt: ");   // X-Position Text (Rahmenbreite + 50 + 30)
+  float fl = s0_count_avg_int / CountYear / 100.0;            // Durchschnitt (Anzahl Jahre / 100)
+  sResponse += fl;                                   // Durchschnitt
+  sResponse += F(" m³/a</text>)"
+                 "<text x=\"405\" y=\"20\" text-anchor=\"middle\">Maximum: ");  // X-Position Text
+  sResponse += s0_count_max_fl;                      // Maximum
+  sResponse += F(" m³/a</text>"
+                 "<text x=\"690\" y=\"20\" text-anchor=\"end\">Gesamt: ");
+  fl = s0_count_ges_int / 100.0;                    // Gesamtverbrauch
+  sResponse += fl;                                  // Gesamt
+  sResponse += F(" m³</text>");
+  // SVG Ende
+  sResponse += F("</svg></td></tr>");                                           // end svg
   // Footer anhängen und senden
   insertFooterSend(sResponse);                    // Footer anhängen und senden
 }
@@ -2607,15 +2822,24 @@ void insertMenu_Setup(String & str) {                     // Setup Menu Tabelle 
            "<td class=\"CLB\" style=\"width: 156px; \"><a href=\"setupmqtt.htm\">MQTT</a></td></tr>");
 }
 
-void insertMenu_Diagramme(String & str) {                     // Diagramme Menu Tabelle Zeile 1 einfügen
+void insertMenu_Diagramme(String & str) {                 // Diagramme Menu Tabelle Zeile 1 einfügen
+  String FileName = F("/log/y_");
+  FileName += (year() - 1);
+  FileName += F(".log");
   str += F("</head><body><form method=\"get\">"
            "<table align=\"center\" style=\"width: 802px\">"
            "<tr><td class=\"CLB\" style=\"width: 156px; \"><a href=\"index.htm\">"
-           "<img src=\"pic/logo.svg\" height=\"32\" width=\"32\" alt=\"Home\"></a></td>"
+           "<img src=\"pic/logo.svg\" height=\"32\" width=\"36\" alt=\"Home\"></a></td>"
            "<td class=\"CLB\" style=\"width: 156px; \"><a href=\"diagramm_d.htm\">Tag</a></td>"
            "<td class=\"CLB\" style=\"width: 156px; \"><a href=\"diagramm_m.htm\">Monat</a></td>"
            "<td class=\"CLB\" style=\"width: 156px; \"><a href=\"diagramm_j.htm\">Jahr</a></td>"
-           "<td class=\"CLB\" style=\"width: 156px; \">&nbsp;</td></tr>");
+           "<td class=\"CLB\" style=\"width: 156px; \">");
+  if (SPIFFS.exists(FileName)) {                // Returns true if a file with given path exists, false otherwise.
+    str += F("<a href=\"diagramm_jahre.htm\">Jahre</a>");
+  } else {
+    str += F("&nbsp;");                                 // Menuepunkt "Jahre" nicht anzeigen
+  }
+  str += F("</td></tr>");
 }
 
 void insertMenu_Log(String & str) {                     // Log Menu Tabelle Zeile 1 einfügen

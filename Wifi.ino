@@ -136,6 +136,7 @@ void createWebServer() {
   server.on ( "/diagramm_d.htm", SiteDiagramm_d);
   server.on ( "/diagramm_m.htm", SiteDiagramm_m);
   server.on ( "/diagramm_j.htm", SiteDiagramm_j);
+  server.on ( "/diagramm_jahre.htm", SiteDiagramm_jahre);
   server.on ( "/info.htm", SiteInfo);
   server.on ( "/files.htm", SiteFiles);
   server.on ( "/statistik.htm", SiteStatistik );
