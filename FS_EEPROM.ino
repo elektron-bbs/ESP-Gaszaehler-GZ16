@@ -231,6 +231,13 @@ void eeprom_alldata_read() {                                        // read all 
   }
   Serial.print(F("EEPROM MQTT publish WLAN RSSI: "));
   Serial.println(eMqttPublish_rssi);
+  eMqttPublish_recon = EEPROM.read(EEPROM_ADDR_MQTTPUBLISHRECON);             // read MQTT publish WLAN Reconnects
+  if (eMqttPublish_recon > 1) {
+    eMqttPublish_recon = 0;
+    EEPROM_write_boolean(EEPROM_ADDR_MQTTPUBLISHRECON, 0);                   // write boolean at address
+  }
+  Serial.print(F("EEPROM MQTT publish WLAN Reconnects: "));
+  Serial.println(eMqttPublish_recon);
 
   eMqttPublish_Intervall = EEPROM.read(EEPROM_ADDR_MQTTINTERVALL);         // read EEPROM MQTT publish intervall
   if (eMqttPublish_Intervall > 60) {

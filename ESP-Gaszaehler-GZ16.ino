@@ -22,7 +22,7 @@ const float ADC_DIV = 190.0;        // Divisor für Batteriespannung bei HW-Vers
 #endif
 
 #define VERSION                     1
-#define BUILD                       86
+#define BUILD                       88
 #define DEBUG_OUTPUT                false
 //#define DEBUG_OUTPUT                true
 
@@ -45,23 +45,25 @@ const float ADC_DIV = 190.0;        // Divisor für Batteriespannung bei HW-Vers
 // int (2 Bytes)
 #define EEPROM_ADDR_MQTTPORT        64
 // Bytes
-#define EEPROM_ADDR_NTPSERVERNUMBER 96
-#define EEPROM_ADDR_START           97
-#define EEPROM_ADDR_MQTTINTERVALL   98
+#define EEPROM_ADDR_NTPSERVERNUMBER  96
+#define EEPROM_ADDR_START            97
+#define EEPROM_ADDR_MQTTINTERVALL    98
 // Boolean
-#define EEPROM_ADDR_DST             112
-#define EEPROM_ADDR_DHCP            113
-#define EEPROM_ADDR_MQTTCONNECT     114
-#define EEPROM_ADDR_MQTTPUBLISHABS  115
-#define EEPROM_ADDR_MQTTPUBLISHMOM  116
-#define EEPROM_ADDR_MQTTPUBLISHRSSI 117
-#define EEPROM_ADDR_SERIALOUTPUT    118
+#define EEPROM_ADDR_DST              112
+#define EEPROM_ADDR_DHCP             113
+#define EEPROM_ADDR_MQTTCONNECT      114
+#define EEPROM_ADDR_MQTTPUBLISHABS   115
+#define EEPROM_ADDR_MQTTPUBLISHMOM   116
+#define EEPROM_ADDR_MQTTPUBLISHRSSI  117
+#define EEPROM_ADDR_MQTTPUBLISHRECON 118
+#define EEPROM_ADDR_SERIALOUTPUT     119
+
 // EEPROM Data
 // long (4 Bytes)
-#define EEPROM_ADDR_S0TRIP1         168
-#define EEPROM_ADDR_S0TRIP1TIME     172
-#define EEPROM_ADDR_S0TRIP2         176
-#define EEPROM_ADDR_S0TRIP2TIME     180
+#define EEPROM_ADDR_S0TRIP1          168
+#define EEPROM_ADDR_S0TRIP1TIME      172
+#define EEPROM_ADDR_S0TRIP2          176
+#define EEPROM_ADDR_S0TRIP2TIME      180
 
 const char compile_date[] = __DATE__;
 const char compile_time[] = __TIME__;
@@ -127,6 +129,7 @@ byte eMqttPublish_Intervall = 3;              // MQTT publish intervall
 boolean eMqttPublish_s0_count_abs = false;    // MQTT publish S0-Counter absolut
 boolean eMqttPublish_s0_count_mom = false;    // MQTT publish S0-Counter Moment
 boolean eMqttPublish_rssi = false;            // MQTT publish WLAN RSSI
+boolean eMqttPublish_recon = false;           // MQTT publish WLAN reconnects
 boolean MqttConnect = false;                  // MQTT connect on/off
 boolean sendMQTT = false;
 
@@ -417,12 +420,12 @@ void loop ( void ) {
           ulReconncount += 1;                     // Counter Reconnects erhöhen
           String logtext = "Wifi connected to ";
           logtext += WiFi.SSID();
-          logtext += ", Channel ";
+          logtext += ", channel ";
           logtext += WiFi.channel();
           appendLogFile(logtext);
           if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
             Serial.println(logtext);
-            Serial.print("Local IP: ");
+            Serial.print(F("Local IP: "));
             Serial.println(WiFi.localIP());
           }
         }
@@ -587,6 +590,15 @@ void loop ( void ) {
                 if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
                   Serial.print(F("MQTT publish RSSI: "));
                   Serial.println(payload);
+                }
+                client.publish(topic.c_str(), payload);
+              }
+              if (eMqttPublish_recon == true) {
+                topic = OwnStationHostname + "/WiFiReconnects";
+                sprintf(payload, "%d", ulReconncount);          // RSSI
+                if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
+                  Serial.print(F("MQTT publish WiFi Reconnects: "));
+                  Serial.println(ulReconncount);
                 }
                 client.publish(topic.c_str(), payload);
               }

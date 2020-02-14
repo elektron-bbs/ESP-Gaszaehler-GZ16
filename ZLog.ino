@@ -17,22 +17,34 @@
   https://github.com/esp8266/arduino-esp8266fs-plugin
   kopieren nach:
   D:\Eigene Dateien\Eigene Dokumente\Arduino\tools\ESP8266FS\tool\esp8266fs.jar
+  ---------------------------------------------------------------------------------------------------------------------
 
+  Der Sketch verwendet 474788 Bytes (45%) des Programmspeicherplatzes. Das Maximum sind 1044464 Bytes.
+  Globale Variablen verwenden 37792 Bytes (46%) des dynamischen Speichers, 44128 Bytes für lokale Variablen verbleiben. Das Maximum sind 81920 Bytes.
+  Arduino 1.8.8, esp8266-2.5.0 - ESP_Gaszaehler_V1_88_MQTT - publish WiFiReconnects, WiFi channel in log
+  ------------------------------------------------------------------------------------------------------
+
+  compile error, Fehler in boards.txt, WPS disabled
+  undefined reference to `WPS_is_unavailable_in_this_configuration__Please_check_FAQ_or_board_generator_tool'
   Arduino 1.8.7, esp8266-2.4.2 - ESP_Gaszaehler_V1_86_Diagramme
+  -------------------------------------------------------------
 
   Der Sketch verwendet 437593 Bytes (41%) des Programmspeicherplatzes. Das Maximum sind 1044464 Bytes.
   Globale Variablen verwenden 39120 Bytes (47%) des dynamischen Speichers, 42800 Bytes für lokale Variablen verbleiben. Das Maximum sind 81920 Bytes.
   lwIP Variant: "v2 Lower memory"
   Arduino 1.8.5, esp8266-2.4.1 - ESP_Gaszaehler_V1_86_Diagramme - Diagramm Jahre hinzugefügt
+  ------------------------------------------------------------------------------------------
 
   Der Sketch verwendet 441828 Bytes (42%) des Programmspeicherplatzes. Das Maximum sind 1044464 Bytes.
   Globale Variablen verwenden 41376 Bytes (50%) des dynamischen Speichers, 40544 Bytes für lokale Variablen verbleiben. Das Maximum sind 81920 Bytes.
   lwIP Variant: "v1.4 Open Source"
   Arduino 1.8.5, esp8266-2.4.0 - ESP_Gaszaehler_V1_85_Log - Speicherung Logs jetzt ab 5 bis 15 Sekunden vor Mitternacht
+  ---------------------------------------------------------------------------------------------------------------------
 
   Der Sketch verwendet 414768 Bytes (39%) des Programmspeicherplatzes. Das Maximum sind 1044464 Bytes.
   Globale Variablen verwenden 41856 Bytes (51%) des dynamischen Speichers, 40064 Bytes für lokale Variablen verbleiben. Das Maximum sind 81920 Bytes.
   Arduino 1.8.5 - ESP_Gaszaehler_V1_84_DST - Nach Umschaltung Sommerzeit Uhrzeit in RTC speichern
+  -----------------------------------------------------------------------------------------------
 
   Der Sketch verwendet 414768 Bytes (39%) des Programmspeicherplatzes. Das Maximum sind 1044464 Bytes.
   Globale Variablen verwenden 41872 Bytes (51%) des dynamischen Speichers, 40048 Bytes für lokale Variablen verbleiben. Das Maximum sind 81920 Bytes.

@@ -398,6 +398,7 @@ void SiteSetupMqtt()  {
   String qabs = server.arg("abs");              // Zählerstand
   String qmom = server.arg("mom");              // Momentanverbrauch
   String qrssi = server.arg("rssi");            // WLAN-RSSI
+  String qrecon = server.arg("recon");          // WLAN-Reconnects
   String qivall = server.arg("ivall");          // Intervall
   String submit = server.arg("submit");         // welcher Button wurde betätigt
   int countargs = server.args();                // Anzahl Argumente
@@ -501,6 +502,12 @@ void SiteSetupMqtt()  {
         eMqttPublish_rssi = false;
       }
       EEPROM_write_boolean(EEPROM_ADDR_MQTTPUBLISHRSSI, eMqttPublish_rssi);          // write boolean at address
+      if (qrecon == "1") {                               // WLAN-Reconnects
+        eMqttPublish_recon = true;
+      } else {
+        eMqttPublish_recon = false;
+      }
+      EEPROM_write_boolean(EEPROM_ADDR_MQTTPUBLISHRECON, eMqttPublish_recon);          // write boolean at address
       eMqttPublish_Intervall = qivall.toInt();          // Intervall
       EEPROM_write_byte(EEPROM_ADDR_MQTTINTERVALL, eMqttPublish_Intervall);          // write byte at address
       appendLogFile(F("MQTT publish settings saved"));
@@ -554,7 +561,7 @@ void SiteSetupMqtt()  {
     sResponse += F("<tr><td colspan=\"5\" class=\"cred\">Keine Verbindung mit Netzwerk!</td></tr>");
   }
   // Zeile 9 einfügen
-  sResponse += F("<tr><td colspan=\"5\" class=\"CXB\">Publizierung durch Energiemonitor</td></tr>"
+  sResponse += F("<tr><td colspan=\"5\" class=\"CXB\">Publizierung durch Gaszähler</td></tr>"
                  // Zeile 10 einfügen
                  "<tr><td colspan=\"1\" class=\"r\">Zählerstand:</td>"
                  "<td colspan=\"1\" class=\"l\"><input name=\"abs\" type=\"checkbox\" value=\"1\"");
@@ -598,6 +605,20 @@ void SiteSetupMqtt()  {
   }
   sResponse += F("</td></tr>"
                  // Zeile 13 einfügen
+                 "<tr><td colspan=\"1\" class=\"r\">Neuverbindungen:</td>"
+                 "<td colspan=\"1\" class=\"l\"><input name=\"recon\" type=\"checkbox\" value=\"1\"");
+  if (eMqttPublish_recon == true) {
+    sResponse += F(" checked=\"checked\"");
+  }
+  sResponse += F("></td><td colspan=\"3\" class=\"l\">");
+  if (eMqttPublish_recon == true) {
+    sResponse += OwnStationHostname;
+    sResponse += F("/WiFiReconnects");
+  } else {
+    sResponse += F("&nbsp;");
+  }
+  sResponse += F("</td></tr>"
+                 // Zeile 14 einfügen
                  "<tr><td colspan=\"1\" class=\"r\">Intervall:</td>"
                  "<td colspan=\"3\" class=\"l\">"
                  "<select name=\"ivall\">");
