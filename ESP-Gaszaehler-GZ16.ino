@@ -22,7 +22,7 @@ const float ADC_DIV = 190.0;        // Divisor für Batteriespannung bei HW-Vers
 #endif
 
 #define VERSION                     1
-#define BUILD                       88
+#define BUILD                       89
 #define DEBUG_OUTPUT                false
 //#define DEBUG_OUTPUT                true
 
@@ -234,7 +234,13 @@ void setup (void) {
       }
     }
     logFile.close();
-    appendLogFile("GZ16 ESP8266 Restart");
+    String logText = F("GZ16 ESP8266 Restart (");
+    logText += ESP.getResetReason();
+    logText += F(")");
+    Serial.println(logText);
+    appendLogFile(logText);
+    //    appendLogFile(ESP.getResetReason());
+    //    appendLogFile("GZ16 ESP8266 Restart");
   }
 
   // Get ESP8266 infomation
@@ -418,9 +424,9 @@ void loop ( void ) {
           ConnectWifi = true;                     // nur einmal ausführen
           digitalWrite(LED_green, LOW) ;          // LED ein
           ulReconncount += 1;                     // Counter Reconnects erhöhen
-          String logtext = "Wifi connected to ";
+          String logtext = F("Wifi connected to ");
           logtext += WiFi.SSID();
-          logtext += ", channel ";
+          logtext += F(", channel ");
           logtext += WiFi.channel();
           appendLogFile(logtext);
           if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet

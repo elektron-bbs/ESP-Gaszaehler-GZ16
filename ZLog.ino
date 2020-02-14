@@ -18,7 +18,9 @@
   kopieren nach:
   D:\Eigene Dateien\Eigene Dokumente\Arduino\tools\ESP8266FS\tool\esp8266fs.jar
   ---------------------------------------------------------------------------------------------------------------------
-
+  Der Sketch verwendet 475180 Bytes (45%) des Programmspeicherplatzes. Das Maximum sind 1044464 Bytes.
+  Globale Variablen verwenden 37776 Bytes (46%) des dynamischen Speichers, 44144 Bytes für lokale Variablen verbleiben. Das Maximum sind 81920 Bytes.
+  Arduino 1.8.8, esp8266-2.5.0 - ESP_Gaszaehler_V1_89_ResetReason - Reset reason in log
   Der Sketch verwendet 474788 Bytes (45%) des Programmspeicherplatzes. Das Maximum sind 1044464 Bytes.
   Globale Variablen verwenden 37792 Bytes (46%) des dynamischen Speichers, 44128 Bytes für lokale Variablen verbleiben. Das Maximum sind 81920 Bytes.
   Arduino 1.8.8, esp8266-2.5.0 - ESP_Gaszaehler_V1_88_MQTT - publish WiFiReconnects, WiFi channel in log
