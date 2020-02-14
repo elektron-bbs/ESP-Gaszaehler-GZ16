@@ -368,4 +368,3 @@ unsigned long getNtpTime() {
   }
   return 0;
 }
-

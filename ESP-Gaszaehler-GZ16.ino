@@ -13,7 +13,7 @@ extern "C" {
 }
 #include <detail\RequestHandlersImpl.h>
 
-#define HW_VERSION_1                // Version 1: ESP-12E, auskommentieren für Version 2 mit NodeMCU
+#define HW_VERSION_1                // Version 1: ESP-12E, auskommentieren für Version 2 (MR) mit NodeMCU
 
 #ifdef HW_VERSION_1
 ADC_MODE(ADC_VCC);                  // vcc read
@@ -415,8 +415,10 @@ void loop ( void ) {
           ConnectWifi = true;                     // nur einmal ausführen
           digitalWrite(LED_green, LOW) ;          // LED ein
           ulReconncount += 1;                     // Counter Reconnects erhöhen
-          String logtext = F("Wifi connected to: ");
+          String logtext = "Wifi connected to ";
           logtext += WiFi.SSID();
+          logtext += ", Channel ";
+          logtext += WiFi.channel();
           appendLogFile(logtext);
           if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
             Serial.println(logtext);
@@ -748,4 +750,3 @@ void loop ( void ) {
     }
   }
 }
-

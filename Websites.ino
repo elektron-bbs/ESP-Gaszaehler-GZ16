@@ -2905,4 +2905,3 @@ void insertFooterSend(String & str) {                            // Footer anhä
 //  Serial.println(formatBytes(ESP.getFreeHeap()).c_str());
 //#endif
 //}
-

@@ -13,6 +13,18 @@
   #define MQTT_VERSION MQTT_VERSION_3_1_1
   #endif
 
+  für ESP8266 Sketch Data Upload erforderlich
+  https://github.com/esp8266/arduino-esp8266fs-plugin
+  kopieren nach:
+  D:\Eigene Dateien\Eigene Dokumente\Arduino\tools\ESP8266FS\tool\esp8266fs.jar
+
+  Arduino 1.8.7, esp8266-2.4.2 - ESP_Gaszaehler_V1_86_Diagramme
+
+  Der Sketch verwendet 437593 Bytes (41%) des Programmspeicherplatzes. Das Maximum sind 1044464 Bytes.
+  Globale Variablen verwenden 39120 Bytes (47%) des dynamischen Speichers, 42800 Bytes für lokale Variablen verbleiben. Das Maximum sind 81920 Bytes.
+  lwIP Variant: "v2 Lower memory"
+  Arduino 1.8.5, esp8266-2.4.1 - ESP_Gaszaehler_V1_86_Diagramme - Diagramm Jahre hinzugefügt
+
   Der Sketch verwendet 441828 Bytes (42%) des Programmspeicherplatzes. Das Maximum sind 1044464 Bytes.
   Globale Variablen verwenden 41376 Bytes (50%) des dynamischen Speichers, 40544 Bytes für lokale Variablen verbleiben. Das Maximum sind 81920 Bytes.
   lwIP Variant: "v1.4 Open Source"
@@ -370,4 +382,3 @@
   Der Sketch verwendet 338.179 Bytes (32%) des Programmspeicherplatzes. Das Maximum sind 1.044.464 Bytes.
   Globale Variablen verwenden 56.048 Bytes (68%) des dynamischen Speichers, 25.872 Bytes für lokale Variablen verbleiben. Das Maximum sind 81.920 Bytes.
 */
-

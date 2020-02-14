@@ -605,4 +605,3 @@ void rotateLog() {
     appendLogFile("Logfile rotated");
   }
 }
-
