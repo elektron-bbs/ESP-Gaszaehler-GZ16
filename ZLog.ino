@@ -19,9 +19,19 @@
   D:\Eigene Dateien\Eigene Dokumente\Arduino\tools\ESP8266FS\tool\esp8266fs.jar
   ---------------------------------------------------------------------------------------------------------------------
 
+  2020-02-14
+  Interrupt-Routinen verschoben von Misc.ino in ESP_Gaszaehler_V1_91_Core263_ICACHE_RAM.ino
+  und Attribut ICACHE_RAM_ATTR bei beiden ISR hinzugefügt.
+
+  Der Sketch verwendet 478224 Bytes (45%) des Programmspeicherplatzes. Das Maximum sind 1044464 Bytes.
+  Globale Variablen verwenden 36976 Bytes (45%) des dynamischen Speichers, 44944 Bytes für lokale Variablen verbleiben. Das Maximum sind 81920 Bytes.
+
+  Arduino 1.8.10, esp8266-2.6.3 - ESP_Gaszaehler_V1_91_Core263_ICACHE_RAM
+  -----------------------------------------------------------------------
+
   2019-11-23
   Versuch Firmwareupdate mit esp8266-2.6.1 - dauernde Neustarts, zurück auf esp8266-2.5.0
-  
+
   Der Sketch verwendet 468988 Bytes (44%) des Programmspeicherplatzes. Das Maximum sind 1044464 Bytes.
   Globale Variablen verwenden 37740 Bytes (46%) des dynamischen Speichers, 44180 Bytes für lokale Variablen verbleiben. Das Maximum sind 81920 Bytes.
 
