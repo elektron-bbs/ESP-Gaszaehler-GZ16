@@ -18,11 +18,32 @@
   kopieren nach:
   D:\Eigene Dateien\Eigene Dokumente\Arduino\tools\ESP8266FS\tool\esp8266fs.jar
   ---------------------------------------------------------------------------------------------------------------------
+
+  2019-11-23
+  Versuch Firmwareupdate mit esp8266-2.6.1 - dauernde Neustarts, zurück auf esp8266-2.5.0
+  
+  Der Sketch verwendet 468988 Bytes (44%) des Programmspeicherplatzes. Das Maximum sind 1044464 Bytes.
+  Globale Variablen verwenden 37740 Bytes (46%) des dynamischen Speichers, 44180 Bytes für lokale Variablen verbleiben. Das Maximum sind 81920 Bytes.
+
+  // String contentTyp = StaticRequestHandler::getContentType(filename);
+  String contentTyp = getContentType(filename);
+  // #include <detail\RequestHandlersImpl.h>
+  lwIPVariant - v2 lower memory (no features)
+  Exeptions - Legacy (new can return nullptr)
+  SSL Support - Basic
+
+  Arduino 1.8.10, esp8266-2.6.1 - ESP_Gaszaehler_V1_90_Core261
+  -------------------------------------------------------------
+
+  Der Sketch verwendet 469252 Bytes (44%) des Programmspeicherplatzes. Das Maximum sind 1044464 Bytes.
+  Globale Variablen verwenden 37720 Bytes (46%) des dynamischen Speichers, 44200 Bytes für lokale Variablen verbleiben. Das Maximum sind 81920 Bytes.
+
   Der Sketch verwendet 475180 Bytes (45%) des Programmspeicherplatzes. Das Maximum sind 1044464 Bytes.
   Globale Variablen verwenden 37776 Bytes (46%) des dynamischen Speichers, 44144 Bytes für lokale Variablen verbleiben. Das Maximum sind 81920 Bytes.
   Arduino 1.8.8, esp8266-2.5.0 - ESP_Gaszaehler_V1_89_ResetReason - Reset reason in log
   Der Sketch verwendet 474788 Bytes (45%) des Programmspeicherplatzes. Das Maximum sind 1044464 Bytes.
   Globale Variablen verwenden 37792 Bytes (46%) des dynamischen Speichers, 44128 Bytes für lokale Variablen verbleiben. Das Maximum sind 81920 Bytes.
+
   Arduino 1.8.8, esp8266-2.5.0 - ESP_Gaszaehler_V1_88_MQTT - publish WiFiReconnects, WiFi channel in log
   ------------------------------------------------------------------------------------------------------
 

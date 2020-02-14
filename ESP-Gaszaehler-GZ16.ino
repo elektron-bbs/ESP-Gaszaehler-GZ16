@@ -11,7 +11,7 @@
 extern "C" {
 #include "user_interface.h"
 }
-#include <detail\RequestHandlersImpl.h>
+// #include <detail\RequestHandlersImpl.h>
 
 #define HW_VERSION_1                // Version 1: ESP-12E, auskommentieren für Version 2 (MR) mit NodeMCU
 
@@ -22,9 +22,9 @@ const float ADC_DIV = 190.0;        // Divisor für Batteriespannung bei HW-Vers
 #endif
 
 #define VERSION                     1
-#define BUILD                       89
-#define DEBUG_OUTPUT                false
-//#define DEBUG_OUTPUT                true
+#define BUILD                       90
+#define DEBUG_OUTPUT_SERIAL                false
+//#define DEBUG_OUTPUT_SERIAL                true
 
 // EEPROM Size
 #define EEPROM_MIN_ADDR             0
@@ -112,7 +112,8 @@ IPAddress esgw;                           // Standard-Gateway static
 IPAddress edns;                           // Domain Name Server static
 boolean ConnectWifi = false;
 String OwnStationHostname = "GZ16-";
-unsigned long ulReconncount;              // Counter Reconnects
+unsigned int ulReconncount;              // Counter Reconnects
+// unsigned long ulReconncount;              // Counter Reconnects
 unsigned long ulWifiRxBytes;              // Count Received Bytes
 unsigned long ulWifiTxBytes;              // Count Transmitted Bytes
 byte webtype = 255;
@@ -625,7 +626,7 @@ void loop ( void ) {
           saveLogYear = false;      // nur einmal ausführen
           // Werte jeden letzten Tag des Monats in jährliche Dateien schreiben (12 Zeilen pro Datei)
           if (day() == LastDayOfMonth(month(), year())) {     //letzter Tag im Monat
-#if DEBUG_OUTPUT == true
+#if DEBUG_OUTPUT_SERIAL == true
             unsigned long startOperation = millis();   // benötigte Rechenzeit für Operation ermitteln (vor Beginn einfügen)
 #endif
             if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
@@ -647,7 +648,7 @@ void loop ( void ) {
             if (month() == 12) {
               s0_count_year = 0;                              // reset S0-Counter year
             }
-#if DEBUG_OUTPUT == true
+#if DEBUG_OUTPUT_SERIAL == true
             TimeOfOperation(startOperation);   // benötigte Rechenzeit für Operation (nach Ende einfügen)
 #endif
           }
@@ -657,7 +658,7 @@ void loop ( void ) {
         if (second() >= 50 && saveLogMonth == true) {
           saveLogMonth = false;      // nur einmal ausführen
           // Werte jeden Tag in monatliche Dateien schreiben (max 31 Zeilen pro Datei)
-#if DEBUG_OUTPUT == true
+#if DEBUG_OUTPUT_SERIAL == true
           unsigned long startOperation = millis();   // benötigte Rechenzeit für Operation ermitteln (vor Beginn einfügen)
 #endif
           if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
@@ -696,7 +697,7 @@ void loop ( void ) {
                 Serial.println(F("Monat und Jahr nicht identisch"));
                 Serial.println(logtext);
               }
-#if DEBUG_OUTPUT == true
+#if DEBUG_OUTPUT_SERIAL == true
               appendLogFile(logtext);
 #endif
               SPIFFS.remove(FileName);  // Deletes the file given its absolute path. Returns true if file was deleted successfully.
@@ -704,7 +705,7 @@ void loop ( void ) {
           }
           SpiffsWriteS0Count(FileName, s0_count_day);   // tägliche Werte in Monatsdatei schreiben
           s0_count_day = 0;                                   // reset S0-Counter day
-#if DEBUG_OUTPUT == true
+#if DEBUG_OUTPUT_SERIAL == true
           TimeOfOperation(startOperation);   // benötigte Rechenzeit für Operation (nach Ende einfügen)
 #endif
         }
@@ -714,7 +715,7 @@ void loop ( void ) {
       if (second() >= 55 && saveLogDayBool == true) {
         saveLogDayBool = false;      // nur einmal ausführen
         // Werte jede Stunde in tägliche Dateien schreiben (24 Zeilen pro Datei)
-#if DEBUG_OUTPUT == true
+#if DEBUG_OUTPUT_SERIAL == true
         unsigned long startOperation = millis();   // benötigte Rechenzeit für Operation ermitteln (vor Beginn einfügen)
 #endif
         if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
@@ -735,7 +736,7 @@ void loop ( void ) {
           File LogFile = SPIFFS.open(FileName, "r");      // Open text file for reading.
           String Datum = LogFile.readStringUntil(' ');    // Lets read string from the file
           LogFile.close();
-#if DEBUG_OUTPUT == true
+#if DEBUG_OUTPUT_SERIAL == true
           Serial.print(Datum);
           Serial.println(F("<-- Datum aus Datei"));
           Serial.print(DateToString(now()));
@@ -748,7 +749,7 @@ void loop ( void ) {
               Serial.println(F("Datum nicht identisch"));
               Serial.println(logtext);
             }
-#if DEBUG_OUTPUT == true
+#if DEBUG_OUTPUT_SERIAL == true
             appendLogFile(logtext);
 #endif
             SPIFFS.remove(FileName);  // Deletes the file given its absolute path. Returns true if file was deleted successfully.
@@ -757,7 +758,7 @@ void loop ( void ) {
         SpiffsWriteS0Count(FileName, s0_count_hour);    // write counter to logfile
         DS1307_write_long(DS1307_ADDR_S0COUNTHOUR, 0);   // save S0-Counter hour to DS1307 RAM
         s0_count_hour = 0;                              // reset S0-Counter hour
-#if DEBUG_OUTPUT == true
+#if DEBUG_OUTPUT_SERIAL == true
         TimeOfOperation(startOperation);   // benötigte Rechenzeit für Operation (nach Ende einfügen)
 #endif
       }

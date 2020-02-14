@@ -239,7 +239,8 @@ void handleUnknown() {
   String filename = server.uri();
   File pageFile = SPIFFS.open(filename, "r");
   if (pageFile)  {
-    String contentTyp = StaticRequestHandler::getContentType(filename);
+   // String contentTyp = StaticRequestHandler::getContentType(filename);
+    String contentTyp = getContentType(filename);
     size_t sent = server.streamFile(pageFile, contentTyp);
     pageFile.close();
     if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet

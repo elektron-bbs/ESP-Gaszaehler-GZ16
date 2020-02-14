@@ -13,7 +13,7 @@
 // Messung Dauer in Millisekunden einer Ausführung
 //unsigned long startOperation = millis();   // benötigte Rechenzeit für Operation ermitteln (vor Beginn einfügen)
 //TimeOfOperation(startOperation);           // benötigte Rechenzeit für Operation (nach Ende einfügen)
-#if DEBUG_OUTPUT == true
+#if DEBUG_OUTPUT_SERIAL == true
 void TimeOfOperation(unsigned long startOperation) {
   String logText = F("Time for operation: ");
   logText += millis() - startOperation;
@@ -78,7 +78,7 @@ long DS1307_read_long(byte address) {
 }
 
 void DS1307_write_long(byte address, long value) {
-#if DEBUG_OUTPUT == true
+#if DEBUG_OUTPUT_SERIAL == true
   Serial.print(F("DS1307 write long at address: "));
   Serial.print(address);
   Serial.print(F(" - "));

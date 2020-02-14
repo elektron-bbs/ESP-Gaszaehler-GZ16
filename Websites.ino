@@ -206,7 +206,7 @@ void SiteSetup()  {
     if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
       SerialPrintLine();            // Trennlinie seriell ausgeben
     }
-#if DEBUG_OUTPUT == true
+#if DEBUG_OUTPUT_SERIAL == true
     Serial.print(F("S0-Count: "));
     Serial.println(qs0count);
     Serial.print(F("Button wurde betaetigt(submit): "));
@@ -406,7 +406,7 @@ void SiteSetupMqtt()  {
     if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
       SerialPrintLine();            // Trennlinie seriell ausgeben
     }
-#if DEBUG_OUTPUT == true
+#if DEBUG_OUTPUT_SERIAL == true
     Serial.print(F("MQTT-Broker: "));
     Serial.println(qbroker);
     Serial.print(F("Username: "));
@@ -664,7 +664,7 @@ void SiteSetupWifi()  {
     }
     WifiNetworks = WiFi.scanNetworks();         // Scanne Netzwerke
   }
-#if DEBUG_OUTPUT == true
+#if DEBUG_OUTPUT_SERIAL == true
   Serial.print(F("Auswahl SSID(qssid): "));
   Serial.println(qssid);
   Serial.print(F("Auswahl versteckte SSID(hssid): "));
@@ -1587,7 +1587,7 @@ void SiteLogJahr()  {
   if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
     SerialPrintLine();            // Trennlinie seriell ausgeben
   }
-#if DEBUG_OUTPUT == true
+#if DEBUG_OUTPUT_SERIAL == true
   Serial.print(F("Search first year: "));
   Serial.println(FirstYear);
 #endif
@@ -1596,13 +1596,13 @@ void SiteLogJahr()  {
     FileName = F("/log/y_");
     FileName += (FirstYear);
     FileName += F(".log");
-#if DEBUG_OUTPUT == true
+#if DEBUG_OUTPUT_SERIAL == true
     Serial.print(F("Search first year: "));
     Serial.println(FirstYear);
 #endif
   }
   FirstYear += 1;
-#if DEBUG_OUTPUT == true
+#if DEBUG_OUTPUT_SERIAL == true
   Serial.print(F("First year: "));
   Serial.println(FirstYear);
 #endif
@@ -2029,7 +2029,7 @@ void SiteDiagramm_m() {
     t += 86400;               // + 1 Tag
   }
   int Sunday = day(t);
-#if DEBUG_OUTPUT == true
+#if DEBUG_OUTPUT_SERIAL == true
   Serial.print("1. Saturday in month: ");
   Serial.println(Saturday);
   Serial.print("1. Sunday im month:   ");
@@ -2263,7 +2263,7 @@ void SiteDiagramm_j() {
   if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
     SerialPrintLine();            // Trennlinie seriell ausgeben
   }
-#if DEBUG_OUTPUT == true
+#if DEBUG_OUTPUT_SERIAL == true
   Serial.print(F("Search first year: "));
   Serial.println(FirstYear);
 #endif
@@ -2272,13 +2272,13 @@ void SiteDiagramm_j() {
     FileName = F("/log/y_");
     FileName += (FirstYear);
     FileName += F(".log");
-#if DEBUG_OUTPUT == true
+#if DEBUG_OUTPUT_SERIAL == true
     Serial.print(F("Search first year: "));
     Serial.println(FirstYear);
 #endif
   }
   FirstYear += 1;
-#if DEBUG_OUTPUT == true
+#if DEBUG_OUTPUT_SERIAL == true
   Serial.print(F("First year: "));
   Serial.println(FirstYear);
 #endif
@@ -2501,7 +2501,7 @@ void SiteDiagramm_jahre() {
   if (SerialOutput == 1) {        // serielle Ausgabe eingeschaltet
     SerialPrintLine();            // Trennlinie seriell ausgeben
   }
-#if DEBUG_OUTPUT == true
+#if DEBUG_OUTPUT_SERIAL == true
   Serial.print(F("Search first year: "));
   Serial.println(FirstYear);
 #endif
@@ -2510,13 +2510,13 @@ void SiteDiagramm_jahre() {
     FileName = F("/log/y_");
     FileName += (FirstYear);
     FileName += F(".log");
-#if DEBUG_OUTPUT == true
+#if DEBUG_OUTPUT_SERIAL == true
     Serial.print(F("Search first year: "));
     Serial.println(FirstYear);
 #endif
   }
   FirstYear += 1;
-#if DEBUG_OUTPUT == true
+#if DEBUG_OUTPUT_SERIAL == true
   Serial.print(F("First year: "));
   Serial.println(FirstYear);
 #endif
@@ -2919,7 +2919,7 @@ void insertFooterSend(String & str) {                            // Footer anhä
 //  ulWifiTxBytes = ulWifiTxBytes + sResponse.length();
 //  server.send (200, "image/svg+xml", sResponse);
 //  digitalWrite(LED_red, HIGH) ;     // LED aus
-//#if DEBUG_OUTPUT == true
+//#if DEBUG_OUTPUT_SERIAL == true
 //  Serial.print(F("HTTP TX Bytes: "));
 //  Serial.print(sResponse.length());
 //  Serial.print(F(", Free Heap: "));
