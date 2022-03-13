@@ -1,6 +1,6 @@
-unsigned int SpiffsReadS0Count(String FileName, byte zeitraum) {
+unsigned int LittleFSReadS0Count(String FileName, byte zeitraum) {
   SerialPrintLine();            // Trennlinie seriell ausgeben
-  Serial.println(F("Read S0-Counts from SPIFFS"));
+  Serial.println(F("Read S0-Counts from LittleFS"));
   Serial.print(F("Filename: "));
   Serial.println(FileName);
   String Line = "";
@@ -17,8 +17,8 @@ unsigned int SpiffsReadS0Count(String FileName, byte zeitraum) {
   int s0_count_int = 0;
   //String s0_count_abs_str = "";
   int S0_Count = 0;
-  if (SPIFFS.exists(FileName)) {                // Returns true if a file with given path exists, false otherwise.
-    File LogFile = SPIFFS.open(FileName, "r");  // Open text file for reading.
+  if (LittleFS.exists(FileName)) {                // Returns true if a file with given path exists, false otherwise.
+    File LogFile = LittleFS.open(FileName, "r");  // Open text file for reading.
     while (LogFile.available()) {
       Line = LogFile.readStringUntil('\n');     // Lets read line by line from the file
       da = Line.substring(0, 2);                // Day
@@ -60,9 +60,9 @@ unsigned int SpiffsReadS0Count(String FileName, byte zeitraum) {
   return S0_Count;
 }
 
-void SpiffsWriteS0Count(String FileName, unsigned int S0_Count) {
+void LittleFSWriteS0Count(String FileName, unsigned int S0_Count) {
   if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-    Serial.println(F("Write S0-Counts to SPIFFS"));
+    Serial.println(F("Write S0-Counts to LittleFS"));
     Serial.print(F("Filename: "));
     Serial.println(FileName);
     Serial.print(F("S0-Count: "));
@@ -70,27 +70,25 @@ void SpiffsWriteS0Count(String FileName, unsigned int S0_Count) {
   }
   //File LogFile;
   //  if (year() < 2016) {
-  //    LogFile = SPIFFS.open(FileName, "w");   // Open for truncate and write
+  //    LogFile = LittleFS.open(FileName, "w");   // Open for truncate and write
   //  } else {
-  //    LogFile = SPIFFS.open(FileName, "a");   // Open for appending (writing at end of file).
+  //    LogFile = LittleFS.open(FileName, "a");   // Open for appending (writing at end of file).
   //  }
-  File LogFile = SPIFFS.open(FileName, "a");   // Open for appending (writing at end of file).
+  File LogFile = LittleFS.open(FileName, "a");   // Open for appending (writing at end of file).
   if (!LogFile) {
-    String logtext = ("Logfile ");
+    String logtext = F("GZ16 Logfile ");
     logtext += (FileName);
-    logtext += (" open failed");
+    logtext += F(" open failed");
     appendLogFile(logtext);
     if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
       Serial.println(logtext);
     }
   } else {
-    LogFile.print(DateToString(now()));        // return Date String from Timestamp
-    LogFile.print(" ");
-    LogFile.print(TimeToString(now()));        // return Time String from Timestamp
-    LogFile.print(" ");
+    LogFile.print(DateTimeToString(now()));    // return Date and Time String from Timestamp
+    LogFile.print(' ');
     LogFile.print(s0_count_abs);               // save S0-Count absolute
-    LogFile.print(" ");
-    LogFile.println(S0_Count);             // save S0-Count
+    LogFile.print(' ');
+    LogFile.println(S0_Count);                 // save S0-Count
   }
   LogFile.close();
 }
@@ -523,15 +521,15 @@ void eeprom_read_table() {
 
 bool handleFileRead(String path) {
   if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-    Serial.println("handleFileRead: " + path);
+    Serial.println(F("handleFileRead: ") + path);
   }
   if (path.endsWith("/")) path += "index.htm";
   String contentType = getContentType(path);
   String pathWithGz = path + ".gz";
-  if (SPIFFS.exists(pathWithGz) || SPIFFS.exists(path)) {
-    if (SPIFFS.exists(pathWithGz))
+  if (LittleFS.exists(pathWithGz) || LittleFS.exists(path)) {
+    if (LittleFS.exists(pathWithGz))
       path += ".gz";
-    File file = SPIFFS.open(path, "r");
+    File file = LittleFS.open(path, "r");
     //size_t sent = server.streamFile(file, contentType);
     server.streamFile(file, contentType);
     file.close();
@@ -541,17 +539,15 @@ bool handleFileRead(String path) {
 }
 
 void appendLogFile(String logText) {
-  File logFile = SPIFFS.open("/log/system.log", "a");  // Open for appending (writing at end of file).
-  logFile.print(DateToString(now()));           // return Date String from Timestamp
-  logFile.print(" ");
-  logFile.print(TimeToString(now()));           // return Time String from Timestamp
-  logFile.print(" ");
+  File logFile = LittleFS.open("/log/system.log", "a");  // Open for appending (writing at end of file).
+  logFile.print(DateTimeToString(now()));           // return Date and Time String from Timestamp
+  logFile.print(' ');
   logFile.println(logText);
   logFile.close();
 }
 
 void rotateLog() {
-  File logFile = SPIFFS.open("/log/system.log", "r");            // Open for reading.
+  File logFile = LittleFS.open("/log/system.log", "r");            // Open for reading.
   size_t logFileSize = logFile.size();                       // files size
   logFile.close();
   if (logFileSize > 8192) {
@@ -561,7 +557,7 @@ void rotateLog() {
       Serial.print(F(" B"));
     }
     //calculate lines
-    logFile = SPIFFS.open("/log/system.log", "r");            // Open for reading.
+    logFile = LittleFS.open("/log/system.log", "r");            // Open for reading.
     int logFileLines = 0;
     while (logFile.available()) {
       //Lets read line by line from the file
@@ -578,24 +574,24 @@ void rotateLog() {
     }
     // Create new File
     // this opens the file in read-mode
-    File logFileNew = SPIFFS.open("/lognew.txt", "r");
+    File logFileNew = LittleFS.open("/lognew.txt", "r");
     if (!logFileNew) {
       if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-        Serial.println(F("SPIFFS new log file doesn't exist yet. Creating it"));
+        Serial.println(F("LittleFS new log file doesn't exist yet. Creating it"));
       }
       // open the file in write mode
-      File logFileNew = SPIFFS.open("/lognew.txt", "w");     // Truncate file to zero length or create text file for writing.
+      File logFileNew = LittleFS.open("/lognew.txt", "w");     // Truncate file to zero length or create text file for writing.
       if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
         if (!logFileNew) {
-          Serial.println(F("SPIFFS new logfile creation failed"));
+          Serial.println(F("LittleFS new logfile creation failed"));
         }
       }
       // now write one line in key/value style with  end-of-line characters
       //logFileNew.println("---------- CREATE FILE ----------");
     }
     logFileNew.close();
-    logFile = SPIFFS.open("/log/system.log", "r");                  // Open for reading.
-    logFileNew = SPIFFS.open("/lognew.txt", "a");            // Open for appending (writing at end of file).
+    logFile = LittleFS.open("/log/system.log", "r");                  // Open for reading.
+    logFileNew = LittleFS.open("/lognew.txt", "a");            // Open for appending (writing at end of file).
     logFileLines = 0;
     while (logFile.available()) {
       //Lets read line by line from the file
@@ -607,8 +603,19 @@ void rotateLog() {
     }
     logFile.close();
     logFileNew.close();
-    SPIFFS.remove("/log/system.log");
-    SPIFFS.rename("/lognew.txt", "/log/system.log");
-    appendLogFile("Logfile rotated");
+    LittleFS.remove("/log/system.log");
+    LittleFS.rename("/lognew.txt", "/log/system.log");
+    appendLogFile(F("Logfile rotated"));
   }
+}
+
+int countLogLines(String FileName) {
+  int rows = 0;
+  File LogFile = LittleFS.open(FileName, "r"); // Open text file for reading.
+  while (LogFile.available()) {
+    String line = LogFile.readStringUntil('\n'); // read line by line from the file
+    rows += 1;
+  }
+  LogFile.close();
+  return rows;
 }

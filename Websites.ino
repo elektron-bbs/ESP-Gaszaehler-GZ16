@@ -108,12 +108,12 @@ nocheinmal:               // Sprungmarke für 2. Durchlauf bei 2 Jahren
     Serial.print(F("Datei: "));
     Serial.println(FileName);
   }
-  if (SPIFFS.exists(FileName)) {    // Returns true if a file with given path exists, false otherwise.
+  if (LittleFS.exists(FileName)) {    // Returns true if a file with given path exists, false otherwise.
     if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-      Serial.print(F("SPIFFS Reading Data from: "));
+      Serial.print(F("LittleFS Reading Data from: "));
       Serial.println(FileName);
     }
-    File LogFile = SPIFFS.open(FileName, "r");      // Open text file for reading.
+    File LogFile = LittleFS.open(FileName, "r");      // Open text file for reading.
     while (LogFile.available()) {
       Line = LogFile.readStringUntil('\n');         // Lets read line by line from the file
       if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
@@ -161,7 +161,7 @@ nocheinmal:               // Sprungmarke für 2. Durchlauf bei 2 Jahren
     FileName = (F("/log/y_"));
     FileName += (year());           // aktuelles Jahr
     FileName += (F(".log"));
-    if (SPIFFS.exists(FileName)) {  // Returns true if a file with given path exists, false otherwise.
+    if (LittleFS.exists(FileName)) {  // Returns true if a file with given path exists, false otherwise.
       goto nocheinmal;              // 2. Durchlauf starten
     } else {                        // Datei aktuelles Jahr existiert auch nicht
       monat = month();              // aktuellen Monat übernehmen
@@ -839,7 +839,7 @@ void SiteSetupWifi()  {
           qssid = hssid;                                // versteckte SSID übernehmen
         }
         WiFi.disconnect();
-        String logtext = "Wifi try new connect to: ";
+        String logtext = F("Wifi try new connect to: ");
         logtext += qssid;
         appendLogFile(logtext);
         if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
@@ -1308,7 +1308,7 @@ void SiteFiles()  {
   sResponse += (F("</head><body><form method=\"get\">"
                   "<table align=\"center\" style=\"width: 802px\">"
                   "<tr><td class=\"CLB\" style=\"width: 156px; \"><a href=\"index.htm\">"
-                  "<img src=\"pic/logo.svg\" height=\"32\" width=\"32\" alt=\"Home\"></a></td>"
+                  "<img src=\"pic/logo.svg\" height=\"32\" width=\"36\" alt=\"Home\"></a></td>"
                   "<td class=\"CLB\" style=\"width: 156px; \"><a href=\"info.htm\">Informationen</a></td>"
                   "<td class=\"CLB\" style=\"width: 156px; \"><a href=\"log.htm\">Log</a></td>"
                   "<td class=\"CLB\" style=\"width: 156px; \"><a href=\"files.htm\">Dateien</a></td>"
@@ -1321,26 +1321,18 @@ void SiteFiles()  {
 
                   // neue Tabelle in Tabelle
                   "<table align=\"center\">"
-                  "<tr><th align=\"left\">Name</th>"
-                  "<th>&nbsp;</th>"
+                  "<tr><th align=\"center\">Name</th>"
+                  "<th align=\"center\">Änderungsdatum</th>"
                   "<th align=\"center\">Größe</th></tr>"));
 
-  Dir dir = SPIFFS.openDir("/");
-  while (dir.next()) {
-    sResponse += F("<tr><td>");
-    String fileName = dir.fileName();
-    fileName.remove(0, 1);
-    sResponse += fileName;
-    sResponse += F("</td><td>&nbsp;</td><td align=\"right\" nowrap=\"nowrap\">");
-    sResponse += formatBytes(dir.fileSize());
-    if (dir.fileSize() < 1024) {
-      sResponse += F("&nbsp;");
-    }
-    sResponse += F("</td></tr>");
-  }
+  sResponse += listDirectories("");
+  sResponse += listDirectories("log");
+  sResponse += listDirectories("pdf");
+  sResponse += listDirectories("pic");
+  sResponse += listDirectories("static");
 
   FSInfo fs_info;
-  SPIFFS.info(fs_info);
+  LittleFS.info(fs_info);
 
   sResponse += F("<tr><td align=\"right\"><strong>verwendet:</strong></td>"
                  "<td>&nbsp;</td><td align=\"right\" nowrap=\"nowrap\"><strong>");
@@ -1390,21 +1382,15 @@ void SiteLogTag()  {
   String FileName = F("/log/d_");
   FileName += DiagrammTimestamp;
   FileName += F(".log");
-  if (SPIFFS.exists(FileName)) {        // Returns true if a file with given path exists, false otherwise.
+  if (LittleFS.exists(FileName)) {        // Returns true if a file with given path exists, false otherwise.
     if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-      Serial.print(F("SPIFFS Reading Data from: "));
+      Serial.print(F("LittleFS Reading Data from: "));
       Serial.println(FileName);
     }
-    File LogFile = SPIFFS.open(FileName, "r"); // Open text file for reading.
-    while (LogFile.available()) {
-      //Lets read line by line from the file
-      String line = LogFile.readStringUntil('\n');
-      rows += 1;
-    }
-    LogFile.close();
+    rows = countLogLines(FileName); // Anzahl Zeilen ermitteln
   } else {
     if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-      Serial.print(F("SPIFFS Logfile not available: "));
+      Serial.print(F("LittleFS Logfile not available: "));
       Serial.println(FileName);
     }
   }
@@ -1446,7 +1432,7 @@ void SiteLogTag()  {
   sResponse += F("<tr><td colspan=\"5\">"
                  "<table align=\"center\"><tr><td><span class=\"font_c\">");
   if (rows > 0) {
-    File LogFile = SPIFFS.open(FileName, "r");         // Open text file for reading.
+    File LogFile = LittleFS.open(FileName, "r");         // Open text file for reading.
     int j = 0;
     while (LogFile.available()) {
       //Lets read line by line from the file
@@ -1495,21 +1481,15 @@ void SiteLogMonat()  {
   String FileName = F("/log/m_");
   FileName += DiagrammTimestamp;
   FileName += F(".log");
-  if (SPIFFS.exists(FileName)) {        // Returns true if a file with given path exists, false otherwise.
+  if (LittleFS.exists(FileName)) {        // Returns true if a file with given path exists, false otherwise.
     if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-      Serial.print(F("SPIFFS Reading Data from: "));
+      Serial.print(F("LittleFS Reading Data from: "));
       Serial.println(FileName);
     }
-    File LogFile = SPIFFS.open(FileName, "r"); // Open text file for reading.
-    while (LogFile.available()) {
-      //Lets read line by line from the file
-      String line = LogFile.readStringUntil('\n');
-      rows += 1;
-    }
-    LogFile.close();
+    rows = countLogLines(FileName); // Anzahl Zeilen ermitteln
   } else {
     if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-      Serial.print(F("SPIFFS Logfile not available: "));
+      Serial.print(F("LittleFS Logfile not available: "));
       Serial.println(FileName);
     }
   }
@@ -1552,7 +1532,7 @@ void SiteLogMonat()  {
   sResponse += F("<tr><td colspan=\"5\">"
                  "<table align=\"center\"><tr><td><span class=\"font_c\">");
   if (rows > 0) {
-    File LogFile = SPIFFS.open(FileName, "r");         // Open text file for reading.
+    File LogFile = LittleFS.open(FileName, "r");         // Open text file for reading.
     int j = 0;
     while (LogFile.available()) {
       //Lets read line by line from the file
@@ -1591,7 +1571,7 @@ void SiteLogJahr()  {
   Serial.print(F("Search first year: "));
   Serial.println(FirstYear);
 #endif
-  while (SPIFFS.exists(FileName)) {        // Returns true if a file with given path exists, false otherwise.
+  while (LittleFS.exists(FileName)) {        // Returns true if a file with given path exists, false otherwise.
     FirstYear -= 1;
     FileName = F("/log/y_");
     FileName += (FirstYear);
@@ -1624,21 +1604,15 @@ void SiteLogJahr()  {
   FileName = F("/log/y_");
   FileName += DiagrammTimestamp;
   FileName += F(".log");
-  if (SPIFFS.exists(FileName)) {        // Returns true if a file with given path exists, false otherwise.
+  if (LittleFS.exists(FileName)) {        // Returns true if a file with given path exists, false otherwise.
     if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-      Serial.print(F("SPIFFS Reading Data from: "));
+      Serial.print(F("LittleFS Reading Data from: "));
       Serial.println(FileName);
     }
-    File LogFile = SPIFFS.open(FileName, "r"); // Open text file for reading.
-    while (LogFile.available()) {
-      //Lets read line by line from the file
-      String line = LogFile.readStringUntil('\n');
-      rows += 1;
-    }
-    LogFile.close();
+    rows = countLogLines(FileName); // Anzahl Zeilen ermitteln
   } else {
     if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-      Serial.print(F("SPIFFS Logfile not available: "));
+      Serial.print(F("LittleFS Logfile not available: "));
       Serial.println(FileName);
     }
   }
@@ -1679,7 +1653,7 @@ void SiteLogJahr()  {
   sResponse += F("<tr><td colspan=\"5\">"
                  "<table align=\"center\"><tr><td><span class=\"font_c\">");
   if (rows > 0) {
-    File LogFile = SPIFFS.open(FileName, "r"); // Open text file for reading.
+    File LogFile = LittleFS.open(FileName, "r"); // Open text file for reading.
     int j = 0;
     while (LogFile.available()) {
       //Lets read line by line from the file
@@ -1703,15 +1677,8 @@ void SiteLogJahr()  {
 // ############################## Log System anzeigen ##############################
 void SiteLogSystem()  {
   String sResponse = "";                        // Response HTML
-  // Anzahl Zeilen ermitteln
-  File logFile = SPIFFS.open("/log/system.log", "r");  // Open text file for reading.
-  int i = 0;
-  while (logFile.available()) {
-    //Lets read line by line from the file
-    String line = logFile.readStringUntil('\n');
-    i += 1;
-  }
-  logFile.close();
+  String FileName = "/log/system.log";
+  int rows = countLogLines(FileName); // Anzahl Zeilen ermitteln
 
   // Beginn HTML
   insertHeaderCSS(sResponse);                        // Header und CCS einfügen
@@ -1730,7 +1697,7 @@ void SiteLogSystem()  {
   // Tabelle Zeile 4 einfügen
   sResponse += F("<tr><td colspan=\"5\">"
                  "<table align=\"center\"><tr><td><span class=\"font_c\">");
-  logFile = SPIFFS.open("/log/system.log", "r");  // Open text file for reading.
+  File logFile = LittleFS.open(FileName, "r");  // Open text file for reading.
   int j = 0;
   while (logFile.available()) {
     //Lets read line by line from the file
@@ -1744,7 +1711,7 @@ void SiteLogSystem()  {
       sResponse += Line;
     }
     j += 1;
-    if (j < i) {
+    if (j < rows) {
       sResponse += F("<br>");
     }
   }
@@ -1781,7 +1748,7 @@ void SiteDiagramm_d() {
     }
   }
 
-  // Read Data from SPIFFS
+  // Read Data from LittleFS
   if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
     SerialPrintLine();            // Trennlinie seriell ausgeben
   }
@@ -1808,12 +1775,12 @@ void SiteDiagramm_d() {
   String FileName = F("/log/d_");
   FileName += (day(DiagrammTimestamp));
   FileName += F(".log");
-  if (SPIFFS.exists(FileName)) {                  // Returns true if a file with given path exists, false otherwise.
+  if (LittleFS.exists(FileName)) {                  // Returns true if a file with given path exists, false otherwise.
     if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-      Serial.print(F("SPIFFS Reading Data from: "));
+      Serial.print(F("LittleFS Reading Data from: "));
       Serial.println(FileName);
     }
-    File LogFile = SPIFFS.open(FileName, "r"); // Open text file for reading.
+    File LogFile = LittleFS.open(FileName, "r"); // Open text file for reading.
     while (LogFile.available()) {
       Line = LogFile.readStringUntil('\n');    //Lets read line by line from the file
       if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
@@ -1842,7 +1809,7 @@ void SiteDiagramm_d() {
     }
   } else {
     if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-      Serial.print(F("SPIFFS Logile not exist: "));
+      Serial.print(F("LittleFS Logile not exist: "));
       Serial.println(FileName);
     }
   }
@@ -2030,13 +1997,13 @@ void SiteDiagramm_m() {
   }
   int Sunday = day(t);
 #if DEBUG_OUTPUT_SERIAL == true
-  Serial.print("1. Saturday in month: ");
+  Serial.print(F("1. Saturday in month: "));
   Serial.println(Saturday);
-  Serial.print("1. Sunday im month:   ");
+  Serial.print(F("1. Sunday im month:   "));
   Serial.println(Sunday);
 #endif
 
-  // Read Data from SPIFFS
+  // Read Data from LittleFS
   if (SerialOutput == 1) {        // serielle Ausgabe eingeschaltet
     SerialPrintLine();            // Trennlinie seriell ausgeben
   }
@@ -2064,12 +2031,12 @@ void SiteDiagramm_m() {
   String FileName = F("/log/m_");
   FileName += (month(DiagrammTimestamp));
   FileName += F(".log");
-  if (SPIFFS.exists(FileName)) {                  // Returns true if a file with given path exists, false otherwise.
+  if (LittleFS.exists(FileName)) {                  // Returns true if a file with given path exists, false otherwise.
     if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-      Serial.print(F("SPIFFS Reading Data from: "));
+      Serial.print(F("LittleFS Reading Data from: "));
       Serial.println(FileName);
     }
-    File LogFile = SPIFFS.open(FileName, "r");    // Open text file for reading.
+    File LogFile = LittleFS.open(FileName, "r");    // Open text file for reading.
     while (LogFile.available()) {
       Line = LogFile.readStringUntil('\n');       //Lets read line by line from the file
       if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
@@ -2098,7 +2065,7 @@ void SiteDiagramm_m() {
     }
   } else {
     if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-      Serial.print(F("SPIFFS Logile not exist: "));
+      Serial.print(F("LittleFS Logile not exist: "));
       Serial.println(FileName);
     }
   }
@@ -2267,7 +2234,7 @@ void SiteDiagramm_j() {
   Serial.print(F("Search first year: "));
   Serial.println(FirstYear);
 #endif
-  while (SPIFFS.exists(FileName)) {        // Returns true if a file with given path exists, false otherwise.
+  while (LittleFS.exists(FileName)) {        // Returns true if a file with given path exists, false otherwise.
     FirstYear -= 1;
     FileName = F("/log/y_");
     FileName += (FirstYear);
@@ -2305,7 +2272,7 @@ void SiteDiagramm_j() {
     }
   }
 
-  // Read Data from SPIFFS
+  // Read Data from LittleFS
   String Line;
   String mo;                                // String Monat
   int moint = 0;                            // Integer Monat
@@ -2327,12 +2294,12 @@ void SiteDiagramm_j() {
   FileName = F("/log/y_");                           // Logdatei Jahr
   FileName += (year(DiagrammTimestamp));
   FileName += F(".log");
-  if (SPIFFS.exists(FileName)) {                // Returns true if a file with given path exists, false otherwise.
+  if (LittleFS.exists(FileName)) {                // Returns true if a file with given path exists, false otherwise.
     if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-      Serial.print(F("SPIFFS Reading Data from: "));
+      Serial.print(F("LittleFS Reading Data from: "));
       Serial.println(FileName);
     }
-    File LogFile = SPIFFS.open(FileName, "r");      // Open text file for reading.
+    File LogFile = LittleFS.open(FileName, "r");      // Open text file for reading.
     while (LogFile.available()) {
       Line = LogFile.readStringUntil('\n');         // Lets read line by line from the file
       if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
@@ -2357,7 +2324,7 @@ void SiteDiagramm_j() {
     }
   } else {
     if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-      Serial.print(F("SPIFFS Logile not exist: "));
+      Serial.print(F("LittleFS Logile not exist: "));
       Serial.println(FileName);
     }
   }
@@ -2505,7 +2472,7 @@ void SiteDiagramm_jahre() {
   Serial.print(F("Search first year: "));
   Serial.println(FirstYear);
 #endif
-  while (SPIFFS.exists(FileName)) {        // Returns true if a file with given path exists, false otherwise.
+  while (LittleFS.exists(FileName)) {        // Returns true if a file with given path exists, false otherwise.
     FirstYear -= 1;
     FileName = F("/log/y_");
     FileName += (FirstYear);
@@ -2520,30 +2487,8 @@ void SiteDiagramm_jahre() {
   Serial.print(F("First year: "));
   Serial.println(FirstYear);
 #endif
-  //  if (countargs == 0) {
-  //  DiagrammTimestamp = now();                                // aktuelle Uhrzeit übernehmen
-  //  } else {
-  //    if (Button == "1") {                                      // Button links
-  //      if (year(DiagrammTimestamp) > FirstYear) {
-  //        if (month(DiagrammTimestamp) > 6) {
-  //          DiagrammTimestamp = DiagrammTimestamp - 31622400;   // - 1 Jahr (366 Tage)
-  //        } else {
-  //          DiagrammTimestamp = DiagrammTimestamp - 31536000;   // - 1 Jahr (365 Tage)
-  //        }
-  //      }
-  //    }
-  //    if (Button == "2") {                                      // Button rechts
-  //      if (year(DiagrammTimestamp) < year()) {
-  //        if (month(DiagrammTimestamp) < 6) {
-  //          DiagrammTimestamp = DiagrammTimestamp + 31622400;   // + 1 Jahr (366 Tage)
-  //        } else {
-  //          DiagrammTimestamp = DiagrammTimestamp + 31536000;   // + 1 Jahr (365 Tage)
-  //        }
-  //      }
-  //    }
-  //  }
 
-  // Read Data from SPIFFS
+  // Read Data from LittleFS
   String Line;
   int Space2;
   int Space3;
@@ -2564,12 +2509,12 @@ void SiteDiagramm_jahre() {
     FileName = F("/log/y_");                            // Logdatei Jahr
     FileName += y;
     FileName += F(".log");
-    if (SPIFFS.exists(FileName)) {                      // Returns true if a file with given path exists, false otherwise.
+    if (LittleFS.exists(FileName)) {                      // Returns true if a file with given path exists, false otherwise.
       if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-        Serial.print(F("SPIFFS Reading Data from: "));
+        Serial.print(F("LittleFS Reading Data from: "));
         Serial.println(FileName);
       }
-      File LogFile = SPIFFS.open(FileName, "r");        // Open text file for reading.
+      File LogFile = LittleFS.open(FileName, "r");        // Open text file for reading.
       while (LogFile.available()) {
         Line = LogFile.readStringUntil('\n');           // Lets read line by line from the file
         if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
@@ -2594,7 +2539,7 @@ void SiteDiagramm_jahre() {
       }
     } else {
       if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-        Serial.print(F("SPIFFS Logile not exist: "));
+        Serial.print(F("LittleFS Logile not exist: "));
         Serial.println(FileName);
       }
     }
@@ -2810,10 +2755,14 @@ void Site404()  {
 
 void insertHeaderCSS(String & str) {                     // Header und CCS einfügen
   digitalWrite(LED_red, LOW) ;     // LED ein
-  str += F("<!DOCTYPE html><html><head>"
+  str += F("<!DOCTYPE html><html lang=\"de\"><head>" // <html> element must have a lang attribute: The <html> element does not have a lang attribute
+           // 'charset' meta element should be specified using shorter '<meta charset="utf-8">' form.
+           "<meta charset=\"utf-8\">"  // 'charset' meta element should be the first thing in '<head>'.
+           "<meta content=\"text/html http-equiv=\"Content-Type\">"
            "<meta content=\"de\" http-equiv=\"Content-Language\">"
-           "<meta content=\"text/html; charset=utf-8\" http-equiv=\"Content-Type\">"
-           "<meta name=\"viewport\" content=\"width=device-width, user-scalable=yes\">"
+           // "<meta name=\"viewport\" content=\"width=device-width, user-scalable=yes\">"
+           // The 'viewport' meta element 'content' attribute value should not contain 'user-scalable'.
+           "<meta name=\"viewport\" content=\"width=device-width\">"
            "<title>Gaszähler ");
   str += OwnStationHostname;
   str += F("</title>"
@@ -2855,7 +2804,7 @@ void insertMenu_Diagramme(String & str) {                 // Diagramme Menu Tabe
            "<td class=\"CLB\" style=\"width: 156px; \"><a href=\"diagramm_m.htm\">Monat</a></td>"
            "<td class=\"CLB\" style=\"width: 156px; \"><a href=\"diagramm_j.htm\">Jahr</a></td>"
            "<td class=\"CLB\" style=\"width: 156px; \">");
-  if (SPIFFS.exists(FileName)) {                // Returns true if a file with given path exists, false otherwise.
+  if (LittleFS.exists(FileName)) {                // Returns true if a file with given path exists, false otherwise.
     str += F("<a href=\"diagramm_jahre.htm\">Jahre</a>");
   } else {
     str += F("&nbsp;");                                 // Menuepunkt "Jahre" nicht anzeigen
@@ -2896,9 +2845,10 @@ void insertFooterSend(String & str) {                            // Footer anhä
            // Ende Tabelle, Form, Body, Html
            "</table></form></body></html>");
   ulWifiTxBytes = ulWifiTxBytes + str.length();
-  server.send ( 200, "text/html", str );
+  server.sendHeader(F("cache-control"), F("private, no-cache"));  // A 'cache-control' header is missing or empty.
+  server.sendHeader(F("X-Content-Type-Options"), F("nosniff"));   // Response should include 'x-content-type-options' header.
+  server.send ( 200, "text/html; charset=utf-8", str );           // 'content-type' header charset value should be 'utf-8'.
   digitalWrite(LED_red, HIGH) ;     // LED aus
-  // ESP.getFreeHeap() returns the free heap size.
   if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
     Serial.print (F("HTTP TX Bytes: "));
     Serial.print (str.length());
@@ -2907,22 +2857,26 @@ void insertFooterSend(String & str) {                            // Footer anhä
   }
 }
 
-//void sendLogo() {                            // Logo SVG senden
-//  String sResponse = F("<svg version=\"1\" xmlns=\"http://www.w3.org/2000/svg\" "
-//                       "width=\"42.667\" height=\"42.667\" viewBox=\"0 0 32 32\" "
-//                       "preserveAspectRatio=\"xMidYMid meet\">"
-//                       "<path d=\"M13 2.35c0 .7-1.8 4.75-4 8.9-5.45 10.35-5.1 16.5 1.1 19.8 1.95 1.05 1.95 "
-//                       "1 .5-1.9-1.25-2.4-1.35-3.65-.45-6.3 1.6-4.75 2.5-5.4 3.9-2.75 1.55 2.85 2.75.8 "
-//                       "2.9-4.85.05-4.15 1.35-4.1 3.95.1 2.75 4.45 2.75 10.55.05 14-2.9 3.7-.2 3.55 3.35-.15 "
-//                       "5.35-5.55 3.45-14.3-5.05-23.35C14.6.9 13 0 13 2.35z\" "
-//                       "fill=\"orange\" stroke=\"none\"/></svg>");
-//  ulWifiTxBytes = ulWifiTxBytes + sResponse.length();
-//  server.send (200, "image/svg+xml", sResponse);
-//  digitalWrite(LED_red, HIGH) ;     // LED aus
-//#if DEBUG_OUTPUT_SERIAL == true
-//  Serial.print(F("HTTP TX Bytes: "));
-//  Serial.print(sResponse.length());
-//  Serial.print(F(", Free Heap: "));
-//  Serial.println(formatBytes(ESP.getFreeHeap()).c_str());
-//#endif
-//}
+String listDirectories(String dirName) {
+  String sResponse = "";                        // Response HTML
+  Dir dir = LittleFS.openDir("/" + dirName);
+  while (dir.next()) {
+    if (dir.isFile()) {
+      sResponse += F("<tr><td>");
+      sResponse += dirName;
+      if (dirName.length()) {
+        sResponse += '/';
+      }
+      sResponse += dir.fileName();
+      sResponse += F("</td><td>&nbsp;");
+      sResponse += DateTimeToString(dir.fileTime()); // return Date and Time String from Timestamp
+      sResponse += F("&nbsp;</td><td align=\"right\" nowrap=\"nowrap\">");
+      sResponse += formatBytes(dir.fileSize());
+      if (dir.fileSize() < 1024) {
+        sResponse += F("&nbsp;");
+      }
+      sResponse += F("</td></tr>");
+    }
+  }
+  return sResponse;
+}

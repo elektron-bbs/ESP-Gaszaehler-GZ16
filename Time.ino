@@ -180,7 +180,7 @@ uint8_t bin2bcd (uint8_t val) {
 
 // return Uptime String from Timestamp (t is time in seconds)
 String UpTimeToString(unsigned long t) {
-  char str[10];
+  char str[11];
   if (t < 86400) {
     sprintf(str, "%02d:%02d:%02d", hour(t), minute(t), second(t));
   } else if (t < 172800) {
@@ -195,22 +195,29 @@ String UpTimeToString(unsigned long t) {
 
 // return Time String from Timestamp (t is time in seconds)
 String TimeToString(unsigned long t) {
-  char str[8];
+  char str[9];
   sprintf(str, "%02d:%02d:%02d", hour(t), minute(t), second(t));
   return str;
 }
 
 // return Time String from Timestamp (t is time in seconds)
 String TimeToStringHM(unsigned long t) {
-  char str[5];
+  char str[6];
   sprintf(str, "%02d:%02d", hour(t), minute(t));
   return str;
 }
 
 // return Date String from Timestamp (t is time in seconds)
 String DateToString(unsigned long t) {
-  char str[10];
+  char str[11];
   sprintf(str, "%02d.%02d.%04d", day(t), month(t), year(t));
+  return str;
+}
+
+// return Date and Time String from Timestamp (t is time in seconds)
+String DateTimeToString(unsigned long t) {
+  char str[20];
+  sprintf(str, "%02d.%02d.%04d %02d:%02d:%02d", day(t), month(t), year(t), hour(t), minute(t), second(t));
   return str;
 }
 
@@ -237,24 +244,26 @@ void checkDst() {
   if (weekday() == 1 && month() == 3 && day() >= 25 && day() <= 31 && hour() == 2 && DST == false) {
     // setclockto 3 am;
     adjustTime(3600); // Adjust system time by adding the adjustment value
+    numberLogLinesDay = 23;
     DST = true;
     EEPROM_write_boolean(EEPROM_ADDR_DST, DST);      // write boolean at address
     DS1307_setTime();                                // set date and time to DS1307
-    appendLogFile("Summertime");
+    appendLogFile(F("Summertime"));
     if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-      Serial.println("Switch to summertime!");
+      Serial.println(F("Switch to summertime!"));
     }
   }
   // check the end of daylight saving time
   if (weekday() == 1 && month() == 10 && day() >= 25 && day() <= 31 && hour() == 3 && DST == true) {
     // setclockto 2 am;
     adjustTime(-3600); // Adjust system time by adding the adjustment value
+    numberLogLinesDay = 25;
     DST = false;
     EEPROM_write_boolean(EEPROM_ADDR_DST, DST);      // write boolean at address
     DS1307_setTime();                                // set date and time to DS1307
-    appendLogFile("Normaltime");
+    appendLogFile(F("Normaltime"));
     if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-      Serial.println("It is Normaltime!");
+      Serial.println(F("It is Normaltime!"));
     }
   }
 }
@@ -267,38 +276,38 @@ boolean setTimeNtp() {
     }
     ntpSyncTimeDeviation = now() - t;           // Abweichung Uhrzeit
     if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-      Serial.print("Systime: ");
+      Serial.print(F("Systime: "));
       Serial.print(now());
-      Serial.println(" Seconds since 01.01.1970");
+      Serial.println(F(" Seconds since 01.01.1970"));
     }
     setTime(t);                                 // Set Time
     DS1307_setTime();                          // set date and time to DS1307
     lastSetTime = now();
     if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-      Serial.print("NTPtime: ");
+      Serial.print(F("NTPtime: "));
       Serial.print(t);
-      Serial.println(" Seconds since 01.01.1970");
-      Serial.print("Deviation: ");
+      Serial.println(F(" Seconds since 01.01.1970"));
+      Serial.print(F("Deviation: "));
       Serial.print(ntpSyncTimeDeviation);
-      Serial.println(" Seconds");
-      Serial.print("Date: ");
+      Serial.println(F(" Seconds"));
+      Serial.print(F("Date: "));
       Serial.println(DateToString(now()));        // return Date String from Timestamp
-      Serial.print("Day of week: ");
+      Serial.print(F("Day of week: "));
       Serial.println(weekday());                  // Day of the week, Sunday is day 1
-      Serial.print("Time: ");
+      Serial.print(F("Time: "));
       Serial.println(TimeToString(now()));        // return Time String from Timestamp
     }
     // ntpSyncInterval = 7200;                     // 2 Stunden
     // ntpSyncInterval = 21600;                    // 6 Stunden
     ntpSyncInterval = 86400;                    // 24 Stunden
-    String logtext = "NTP time sync OK (";
+    String logtext = F("NTP time sync OK (");
     logtext += (ntpSyncTimeDeviation);
-    logtext += (" Sek)");
+    logtext += F(" Sek)");
     appendLogFile(logtext);
     return 1;
   } else {
     ntpSyncInterval = 3600;                      // 60 Minuten
-    appendLogFile("NTP time sync Error");
+    appendLogFile(F("NTP time sync Error"));
     return 0;
   }
 }
@@ -309,7 +318,7 @@ unsigned long getNtpTime() {
   //String log = F("NTP: NTP sync requested");
   //addLog(LOG_LEVEL_DEBUG_MORE, log);
   if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-    Serial.println("NTP: sync requested");
+    Serial.println(F("NTP: sync requested"));
   }
 
   const int NTP_PACKET_SIZE = 48;         // NTP time is in the first 48 bytes of message
@@ -324,7 +333,7 @@ unsigned long getNtpTime() {
   //log += host;
   //addLog(LOG_LEVEL_DEBUG_MORE, log);
   if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-    Serial.print("NTP: send to ");
+    Serial.print(F("NTP: send to "));
     Serial.println(host);
   }
   while (udp.parsePacket() > 0) ;               // discard any previously received packets
@@ -356,7 +365,7 @@ unsigned long getNtpTime() {
       //log = F("NTP: NTP replied!");
       //addLog(LOG_LEVEL_DEBUG_MORE, log);
       if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-        Serial.println("NTP: replied!");
+        Serial.println(F("NTP: replied!"));
       }
       return secsSince1900 - 2208988800UL + TimeZone * 3600;
     }
@@ -364,7 +373,7 @@ unsigned long getNtpTime() {
   //log = F("NTP: No reply");
   //addLog(LOG_LEVEL_DEBUG_MORE, log);
   if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-    Serial.println("NTP: no reply");
+    Serial.println(F("NTP: no reply"));
   }
   return 0;
 }

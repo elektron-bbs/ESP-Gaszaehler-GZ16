@@ -1,4 +1,6 @@
-String WebsiteStatistikJahreszeiten(String str, byte monat, long s0_count_ges_int, int tage, String ye) {
+// warning: comparison is always true due to limited range of data type [-Wtype-limits] 12 |   if ((monat >= 0 && monat <= 2) || monat >= 12) {
+//String WebsiteStatistikJahreszeiten(String str, byte monat, long s0_count_ges_int, int tage, String ye) {
+String WebsiteStatistikJahreszeiten(String str, int monat, long s0_count_ges_int, int tage, String ye) {
   if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
     Serial.print(F("S0-Count Jahreszeit "));
     Serial.print(monat);
@@ -195,23 +197,23 @@ void print_info() {
   SerialPrintLine();            // Trennlinie seriell ausgeben
   Serial.println(F("Filesystem ESP8266:"));
 
-  //SPIFFS
+  //LittleFS
   FSInfo fs_info;
-  SPIFFS.info(fs_info);
-  Serial.print(F("SPIFFS total size: "));
+  LittleFS.info(fs_info);
+  Serial.print(F("LittleFS total size: "));
   Serial.println(formatBytes(fs_info.totalBytes));
-  Serial.print(F("SPIFFS used bytes: "));
+  Serial.print(F("LittleFS used bytes: "));
   Serial.println(formatBytes(fs_info.usedBytes));
-  Serial.print(F("SPIFFS block size: "));
+  Serial.print(F("LittleFS block size: "));
   Serial.println(formatBytes(fs_info.blockSize));
-  Serial.print(F("SPIFFS page size: "));
+  Serial.print(F("LittleFS page size: "));
   Serial.println(formatBytes(fs_info.pageSize));
 
   // Dateien anzeigen
-  Dir dir = SPIFFS.openDir("/");
+  Dir dir = LittleFS.openDir("/");
   while (dir.next()) {
     String fileName = dir.fileName();
     size_t fileSize = dir.fileSize();
-    Serial.printf("SPIFFS File: %s, size: %s\r\n", fileName.c_str(), formatBytes(fileSize).c_str());
+    Serial.printf("LittleFS File: %s, size: %s\r\n", fileName.c_str(), formatBytes(fileSize).c_str());
   }
 }

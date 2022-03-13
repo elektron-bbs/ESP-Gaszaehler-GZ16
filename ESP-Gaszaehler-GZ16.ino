@@ -3,7 +3,7 @@
 #include <ESP8266mDNS.h>
 #include <ESP8266HTTPUpdateServer.h>
 #include <EEPROM.h>
-#include <FS.h>
+#include <LittleFS.h>
 #include <TimeLib.h>
 #include <PubSubClient.h>
 #include <Wire.h>
@@ -21,10 +21,12 @@ ADC_MODE(ADC_VCC);                  // vcc read
 const float ADC_DIV = 190.0;        // Divisor für Batteriespannung bei HW-Version 2
 #endif
 
+#define HOSTNAME                    "GZ16-ESP-" // Hostname, 3 Byte Chip-ID werden angehangen
+
 #define VERSION                     1
-#define BUILD                       91
-#define DEBUG_OUTPUT_SERIAL                false
-//#define DEBUG_OUTPUT_SERIAL                true
+#define BUILD                       93
+#define DEBUG_OUTPUT_SERIAL         false
+//#define DEBUG_OUTPUT_SERIAL        true
 
 // EEPROM Size
 #define EEPROM_MIN_ADDR             0
@@ -105,13 +107,15 @@ WiFiClient espClient;
 // Netzwerk
 String essid = "";                        // Wifi SSID
 String epass = "";                        // Wifi Password
-boolean edhcp = true;                     // IP-Adresse mittels DHCP
+//boolean edhcp = true;                     // IP-Adresse mittels DHCP
+byte edhcp = true;                     // IP-Adresse mittels DHCP
 IPAddress eip;                            // IP-Adresse static IP
 IPAddress esnm;                           // Subnetzmaske static
 IPAddress esgw;                           // Standard-Gateway static
 IPAddress edns;                           // Domain Name Server static
 boolean ConnectWifi = false;
-String OwnStationHostname = "GZ16-";
+String OwnStationHostname = HOSTNAME;
+//String OwnStationHostname = F("GZ16-ESP-");
 unsigned int ulReconncount;              // Counter Reconnects
 // unsigned long ulReconncount;              // Counter Reconnects
 unsigned long ulWifiRxBytes;              // Count Received Bytes
@@ -127,24 +131,31 @@ String eMqttUsername = "";                    // MQTT-Username
 String eMqttPassword = "";                    // MQTT-Password
 int eMqttPort = 0;                            // MQTT-Port
 byte eMqttPublish_Intervall = 3;              // MQTT publish intervall
-boolean eMqttPublish_s0_count_abs = false;    // MQTT publish S0-Counter absolut
-boolean eMqttPublish_s0_count_mom = false;    // MQTT publish S0-Counter Moment
-boolean eMqttPublish_rssi = false;            // MQTT publish WLAN RSSI
-boolean eMqttPublish_recon = false;           // MQTT publish WLAN reconnects
-boolean MqttConnect = false;                  // MQTT connect on/off
+//boolean eMqttPublish_s0_count_abs = false;    // MQTT publish S0-Counter absolut
+byte eMqttPublish_s0_count_abs = false;    // MQTT publish S0-Counter absolut
+//boolean eMqttPublish_s0_count_mom = false;    // MQTT publish S0-Counter Moment
+byte eMqttPublish_s0_count_mom = false;    // MQTT publish S0-Counter Moment
+//boolean eMqttPublish_rssi = false;            // MQTT publish WLAN RSSI
+byte eMqttPublish_rssi = false;            // MQTT publish WLAN RSSI
+//boolean eMqttPublish_recon = false;           // MQTT publish WLAN reconnects
+byte eMqttPublish_recon = false;           // MQTT publish WLAN reconnects
+//boolean MqttConnect = false;                  // MQTT connect on/off
+byte MqttConnect = false;                  // MQTT connect on/off
 boolean sendMQTT = false;
 
 // Zeit
 const int8_t TimeZone = 1;                    // Europe/Berlin
 String ntpServerName[3] = {"pool.ntp.org", "de.pool.ntp.org", ""};
 byte ntpServerNr = 0;
-boolean DST = true;
+//boolean DST = true; // warning: comparison of constant '1' with boolean expression is always false
+byte DST = true; // warning: comparison of constant '1' with boolean expression is always false
 unsigned long ntpSyncInterval = 0;            // time sync will be attempted after this many seconds
 unsigned long ntpSyncSecCount = 0;            // Counter Seconds since last NTP sync
 long ntpSyncTimeDeviation = 0;                // Abweichung Zeit intern zu NTP
 unsigned long lastSetTime;
 int sec_old;
 unsigned long uptime;
+int numberLogLinesDay = 24;
 
 // Gas counter
 volatile long s0_count_abs;                  // S0-Counter absolut
@@ -167,10 +178,11 @@ boolean saveLogMonth = false;
 boolean saveLogDayBool = false;
 
 // Misc
-boolean SerialOutput;   // serielle Ausgabe ein/aus
+//boolean SerialOutput;   // serielle Ausgabe ein/aus
+byte SerialOutput;   // serielle Ausgabe ein/aus
 long DiagrammTimestamp;
 
-void ICACHE_RAM_ATTR Interrupt_Button() {
+void IRAM_ATTR Interrupt_Button() {
   int reading = digitalRead(Input_Button);      // Get the pin reading.
   if (reading == Button_Input_State) return;    // Ignore dupe readings.
   boolean debounce = false;
@@ -193,7 +205,7 @@ void ICACHE_RAM_ATTR Interrupt_Button() {
   }
 }
 
-void ICACHE_RAM_ATTR Interrupt_S0() {
+void IRAM_ATTR Interrupt_S0() {
   int reading = digitalRead(Input_S0_Count);  // Get the pin reading.
   if (reading == S0_Input_State) return;      // Ignore dupe readings.
   boolean debounce = false;
@@ -239,7 +251,6 @@ void setup (void) {
   Wire.begin(I2C_SDA_Pin, I2C_SCL_Pin);
   SerialPrintLine();            // Trennlinie seriell ausgeben
   if (! DS1307_isrunning()) {
-    //appendLogFile("RTC is NOT running!");
     Serial.println(F("RTC is NOT running! Please set date and time."));
     digitalWrite(LED_red, LOW) ;     // LED ein
     DS1307_clear_ram();
@@ -250,7 +261,6 @@ void setup (void) {
   } else {
     DS1307_getTime();                          // get date and time from DS1307
     lastSetTime = now();
-    //appendLogFile("RTC read date and time");
     Serial.println(F("RTC read date and time:"));
     Serial.print(F("Date: "));
     Serial.println(DateToString(now()));        // return Date String from Timestamp
@@ -262,22 +272,22 @@ void setup (void) {
 
   // Initialize file system.
   SerialPrintLine();            // Trennlinie seriell ausgeben
-  if (!SPIFFS.begin()) {
+  if (!LittleFS.begin()) {
     //filesystem = false;
-    Serial.println(F("SPIFFS Failed to mount file system"));
+    Serial.println(F("LittleFS Failed to mount file system"));
   } else {
     //filesystem = true;
     // always use this to "mount" the filesystem
-    //bool result = SPIFFS.begin();
-    Serial.println(F("SPIFFS Filesystem mounted"));
-    File logFile = SPIFFS.open("/log/system.log", "r");     //Open text file for reading.
+    //bool result = LittleFS.begin();
+    Serial.println(F("LittleFS Filesystem mounted"));
+    File logFile = LittleFS.open("/log/system.log", "r");     //Open text file for reading.
     if (!logFile) {
-      Serial.println(F("SPIFFS file /log/system.log doesn't exist yet. Creating it"));
-      File logFile = SPIFFS.open("/log/system.log", "w");   // Truncate file to zero length or create text file for writing.
+      Serial.println(F("LittleFS file /log/system.log doesn't exist yet. Creating it"));
+      File logFile = LittleFS.open("/log/system.log", "w");   // Truncate file to zero length or create text file for writing.
       if (!logFile) {
-        Serial.println(F("SPIFFS file creation failed"));
+        Serial.println(F("LittleFS file creation failed"));
       } else {
-        logFile.println("---------- CREATE LOG FILE ----------");
+        logFile.println(F("---------- CREATE LOG FILE ----------"));
       }
     }
     logFile.close();
@@ -286,8 +296,6 @@ void setup (void) {
     logText += F(")");
     Serial.println(logText);
     appendLogFile(logText);
-    //    appendLogFile(ESP.getResetReason());
-    //    appendLogFile("GZ16 ESP8266 Restart");
   }
 
   // Get ESP8266 infomation
@@ -301,19 +309,19 @@ void setup (void) {
   EEPROM.begin(EEPROM_MAX_ADDR);                // max 4096 Bytes
   eeprom_alldata_read();                         // read all data from EEPROM
 
-  // Read S0-Data from SPIFFS
+  // Read S0-Data from LittleFS
   String FileName = (F("/log/d_"));                    // lese aktuellen Tag
   FileName += (day());
   FileName += (F(".log"));     // Dateiende ".log" anhängen
-  s0_count_day = SpiffsReadS0Count(FileName, 1);
+  s0_count_day = LittleFSReadS0Count(FileName, 1);
   FileName = (F("/log/m_"));                           // lese aktuellen Monat
   FileName += (month());
   FileName += (F(".log"));     // Dateiende ".log" anhängen
-  s0_count_month = SpiffsReadS0Count(FileName, 2);
+  s0_count_month = LittleFSReadS0Count(FileName, 2);
   FileName = (F("/log/y_"));                           // lese aktuelles Jahr
   FileName += (year());
   FileName += (F(".log"));     // Dateiende ".log" anhängen
-  s0_count_year = SpiffsReadS0Count(FileName, 3);
+  s0_count_year = LittleFSReadS0Count(FileName, 3);
   SerialPrintLine();            // Trennlinie seriell ausgeben
 
   // Read S0-Data from DS1307
@@ -334,16 +342,14 @@ void setup (void) {
   Serial.println(s0_count_abs);
 
   // Hostnamen bilden
+  char buf[10];
   SerialPrintLine();            // Trennlinie seriell ausgeben
-  Serial.print(F("Hostname: "));
-  Serial.println(WiFi.hostname());
-  OwnStationHostname += WiFi.hostname();
+  sprintf(buf, "%06X", ESP.getChipId());
+  OwnStationHostname += buf;
   OwnStationHostname.replace("_", "-");       // Unterstrich ersetzen, nicht zulässig im Hostnamen
-  Serial.print(F("new Hostname: "));
+  Serial.print(F("Hostname: "));
   Serial.println(OwnStationHostname);
   WiFi.hostname(OwnStationHostname);
-  char* chrOwnHostname = &OwnStationHostname[0];
-  wifi_station_set_hostname(chrOwnHostname);
 
   if (estart > 3) {                                         // max. 3 Versuche WPS
     // 3 x Fehler WPS - starte Accesspoint
@@ -684,7 +690,7 @@ void loop ( void ) {
             String FileName = (F("/log/y_"));
             FileName += (year());
             FileName += (F(".log"));
-            SpiffsWriteS0Count(FileName, s0_count_month);     // monatliche Werte in Jahresdatei schreiben
+            LittleFSWriteS0Count(FileName, s0_count_month);     // monatliche Werte in Jahresdatei schreiben
             s0_count_month = 0;                               // reset S0-Counter month
             if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
               Serial.print(F("Days of Month: "));
@@ -717,12 +723,12 @@ void loop ( void ) {
           FileName += (month());
           FileName += (F(".log"));
           // prüfe Logdatei und lösche sie, wenn Monat nicht mit aktuellem übereinstimmt
-          if (SPIFFS.exists(FileName)) {                    // Returns true if a file with given path exists, false otherwise.
+          if (LittleFS.exists(FileName)) {                    // Returns true if a file with given path exists, false otherwise.
             if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-              Serial.print(F("SPIFFS Reading Data from: "));
+              Serial.print(F("LittleFS Reading Data from: "));
               Serial.println(FileName);
             }
-            File LogFile = SPIFFS.open(FileName, "r");      // Open text file for reading.
+            File LogFile = LittleFS.open(FileName, "r");      // Open text file for reading.
             String Datum = LogFile.readStringUntil(' ');    // Lets read string from the file
             LogFile.close();
             Datum.remove(0, 3); // Remove 3 characters starting at index=0
@@ -737,7 +743,7 @@ void loop ( void ) {
               Serial.println(F("<-- Monat und Jahr heute"));
             }
             if (Datum != DatumNow) {
-              String logtext = F("SPIFFS Delete old log: ");
+              String logtext = F("LittleFS Delete old log: ");
               logtext += (FileName);
               if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
                 Serial.println(F("Monat und Jahr nicht identisch"));
@@ -746,10 +752,10 @@ void loop ( void ) {
 #if DEBUG_OUTPUT_SERIAL == true
               appendLogFile(logtext);
 #endif
-              SPIFFS.remove(FileName);  // Deletes the file given its absolute path. Returns true if file was deleted successfully.
+              LittleFS.remove(FileName);  // Deletes the file given its absolute path. Returns true if file was deleted successfully.
             }
           }
-          SpiffsWriteS0Count(FileName, s0_count_day);   // tägliche Werte in Monatsdatei schreiben
+          LittleFSWriteS0Count(FileName, s0_count_day);   // tägliche Werte in Monatsdatei schreiben
           s0_count_day = 0;                                   // reset S0-Counter day
 #if DEBUG_OUTPUT_SERIAL == true
           TimeOfOperation(startOperation);   // benötigte Rechenzeit für Operation (nach Ende einfügen)
@@ -774,12 +780,12 @@ void loop ( void ) {
         FileName += (day());
         FileName += (F(".log"));
         // prüfe Logdatei und lösche sie, wenn Datum nicht mit aktuellem übereinstimmt
-        if (SPIFFS.exists(FileName)) {                    // Returns true if a file with given path exists, false otherwise.
+        if (LittleFS.exists(FileName)) {                    // Returns true if a file with given path exists, false otherwise.
           if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-            Serial.print(F("SPIFFS Reading Data from: "));
+            Serial.print(F("LittleFS Reading Data from: "));
             Serial.println(FileName);
           }
-          File LogFile = SPIFFS.open(FileName, "r");      // Open text file for reading.
+          File LogFile = LittleFS.open(FileName, "r");      // Open text file for reading.
           String Datum = LogFile.readStringUntil(' ');    // Lets read string from the file
           LogFile.close();
 #if DEBUG_OUTPUT_SERIAL == true
@@ -789,7 +795,7 @@ void loop ( void ) {
           Serial.println(F("<-- Datum heute"));
 #endif
           if (Datum != DateToString(now())) {
-            String logtext = F("SPIFFS Delete old log: ");
+            String logtext = F("LittleFS Delete old log: ");
             logtext += (FileName);
             if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
               Serial.println(F("Datum nicht identisch"));
@@ -798,12 +804,26 @@ void loop ( void ) {
 #if DEBUG_OUTPUT_SERIAL == true
             appendLogFile(logtext);
 #endif
-            SPIFFS.remove(FileName);  // Deletes the file given its absolute path. Returns true if file was deleted successfully.
+            LittleFS.remove(FileName);  // Deletes the file given its absolute path. Returns true if file was deleted successfully.
           }
         }
-        SpiffsWriteS0Count(FileName, s0_count_hour);    // write counter to logfile
+        LittleFSWriteS0Count(FileName, s0_count_hour);    // write counter to logfile
         DS1307_write_long(DS1307_ADDR_S0COUNTHOUR, 0);   // save S0-Counter hour to DS1307 RAM
         s0_count_hour = 0;                              // reset S0-Counter hour
+        // Anzahl Logzeilen einmal pro Tag prüfen
+        if (hour() == 23) {
+          // Anzahl Zeilen ermitteln
+          int rows = countLogLines(FileName); // Anzahl Zeilen ermitteln
+          if (rows < numberLogLinesDay) { // wird bei Zeitumstellung Sommer/Winter geändert, normal 24
+            String logtext = F("GZ16 number of log entries per day < ");
+            logtext += numberLogLinesDay;
+            logtext += F(" (");
+            logtext += rows;
+            logtext += ')';
+            appendLogFile(logtext);
+          }
+          numberLogLinesDay = 24;
+        }
 #if DEBUG_OUTPUT_SERIAL == true
         TimeOfOperation(startOperation);   // benötigte Rechenzeit für Operation (nach Ende einfügen)
 #endif

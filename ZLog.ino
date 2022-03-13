@@ -13,11 +13,125 @@
   #define MQTT_VERSION MQTT_VERSION_3_1_1
   #endif
 
-  für ESP8266 Sketch Data Upload erforderlich
+  für ESP8266 SPIFFS Sketch Data Upload erforderlich
   https://github.com/esp8266/arduino-esp8266fs-plugin
+  https://github.com/esp8266/arduino-esp8266fs-plugin/releases/
   kopieren nach:
   D:\Eigene Dateien\Eigene Dokumente\Arduino\tools\ESP8266FS\tool\esp8266fs.jar
+
+  für ESP8266 Little Data-Upload-Tool installieren:
+  https://github.com/earlephilhower/arduino-esp8266littlefs-plugin
+  https://github.com/earlephilhower/arduino-esp8266littlefs-plugin/releases
+
   ---------------------------------------------------------------------------------------------------------------------
+
+  How to upgrade a file system via OTA
+  ------------------------------------
+  Here is original: https://www.fancon.cz/esp8266-humi-server-klient/arduino-humi-server-client.html#otafile
+
+  Translation:
+  How to upgrade a file system via OTA
+  1/28/2021
+  I've been looking for advice for a long time on how to upload a file to a file system via OTA, as I mentioned above.
+  But I always broke down LittleFS (SPIFFS).
+  But now I read that I can't upload files directly, but first I have to convert the whole file system to * .bin.
+  There is a special tool for this, which does not work more than it works.
+  But I found in that scary jungle of the internet (They should cancel it ...) a gem, advice on gold.
+
+  To upgrade via a serial line, you always need tools (downloaded from github.com), which I have already installed in the Arduino IDE.
+  If I have data for SPIFFS stored in the project in the data directory where it must be located,
+  then just run the ESP8266 LittleFS Data Upload tool over the open project.
+  He is trying to record via a serial line, but since the ESP8266 is not connected, it crashes.
+  Before his death, however, he writes where he created the file system in the * .bin format.
+
+  For a project named HUMI3_LOOP, it looks something like this:
+  [LittleFS] upload: C: \ Users \ Pavel \ AppData \ Local \ Temp \ arduino_build_732033 / HUMI3_LOOP.mklittlefs.bin
+  [LittleFS] upload  : C:\Users\SiHeiTec\AppData\Local\Temp\arduino_build_686077/ESP_Gaszaehler_V1_93_Core302_LittleFS.mklittlefs.bin
+
+  And then you just need to extract the HUMI3_LOOP.mklittlefs.bin file from this location and upload it via OTA with the FileSystem entry.
+  In order to be able to easily transfer the file to the client, the settings in your ESP8266 http server must not be missing.
+
+  For favicon.ico it is this line:
+  server.serveStatic ("/ favicon.ico", LittleFS, "favicon.ico");
+
+  That line of code tells the server to reach the file system when a client requests a favicon.ico file and send the requested file directly to the client.
+  Amazing with its simplicity. If the file is not found, then the client's 404 File not found is returned.
+  Beautifully transparent and it even works. Only in this work does the accuracy of the name and the size of the letters matter.
+
+  But when I first successfully uploaded favicon.ico via OTA, a tiny icon didn't appear in Chrome.
+  I deleted the cache and who knows what else. Eventually I ran Edge and lo and behold, the icon was.
+  Chrome remembered that he hadn't received a favicon from a source before, and then didn't ask for it again. But after a while he could tell.
+
+  You can also easily get a file from the ESP8266 http server file system,
+  including favicon.ico, by simply querying IP-ESP8266 / favicon.ico and having it on the screen.
+  It's amazing when I uploaded a nice JPG image via OTA and the browser could view it directly from that mischievous cockroach.
+  Please note the tiny blue favicon at the top left. The image itself is full screen, but I have reduced the size of the browser window to see what and how.
+  If you know all this and you knew how to do it, then you should have told me ...
+
+  ---------------------------------------------------------------------------------------------------------------------
+  2022-01-27
+  - add command restart
+  - F-Macro in server.on...
+  Der Sketch verwendet 479685 Bytes (45%) des Programmspeicherplatzes. Das Maximum sind 1044464 Bytes.
+  Globale Variablen verwenden 37584 Bytes (45%) des dynamischen Speichers, 44336 Bytes für lokale Variablen verbleiben. Das Maximum sind 81920 Bytes.
+
+  2022-01-24
+  Der Sketch verwendet 479229 Bytes (45%) des Programmspeicherplatzes. Das Maximum sind 1044464 Bytes.
+  Globale Variablen verwenden 37744 Bytes (46%) des dynamischen Speichers, 44176 Bytes für lokale Variablen verbleiben. Das Maximum sind 81920 Bytes.
+
+  2022-01-22
+  Der Sketch verwendet 479209 Bytes (45%) des Programmspeicherplatzes. Das Maximum sind 1044464 Bytes.
+  Globale Variablen verwenden 37804 Bytes (46%) des dynamischen Speichers, 44116 Bytes für lokale Variablen verbleiben. Das Maximum sind 81920 Bytes.
+  Der Sketch verwendet 479273 Bytes (45%) des Programmspeicherplatzes. Das Maximum sind 1044464 Bytes.
+  Globale Variablen verwenden 37804 Bytes (46%) des dynamischen Speichers, 44116 Bytes für lokale Variablen verbleiben. Das Maximum sind 81920 Bytes.
+  Der Sketch verwendet 479513 Bytes (45%) des Programmspeicherplatzes. Das Maximum sind 1044464 Bytes.
+  Globale Variablen verwenden 37788 Bytes (46%) des dynamischen Speichers, 44132 Bytes für lokale Variablen verbleiben. Das Maximum sind 81920 Bytes.
+
+  2022-01-21
+  HW_VERSION_1
+  Der Sketch verwendet 479481 Bytes (45%) des Programmspeicherplatzes. Das Maximum sind 1044464 Bytes.
+  Globale Variablen verwenden 37788 Bytes (46%) des dynamischen Speichers, 44132 Bytes für lokale Variablen verbleiben. Das Maximum sind 81920 Bytes.
+  HW_VERSION_2
+  Der Sketch verwendet 479477 Bytes (45%) des Programmspeicherplatzes. Das Maximum sind 1044464 Bytes.
+  Globale Variablen verwenden 37788 Bytes (46%) des dynamischen Speichers, 44132 Bytes für lokale Variablen verbleiben. Das Maximum sind 81920 Bytes.
+
+  2022-01-16
+  Der Sketch verwendet 479381 Bytes (45%) des Programmspeicherplatzes. Das Maximum sind 1044464 Bytes.
+  Globale Variablen verwenden 37864 Bytes (46%) des dynamischen Speichers, 44056 Bytes für lokale Variablen verbleiben. Das Maximum sind 81920 Bytes.
+  Der Sketch verwendet 479365 Bytes (45%) des Programmspeicherplatzes. Das Maximum sind 1044464 Bytes.
+  Globale Variablen verwenden 38284 Bytes (46%) des dynamischen Speichers, 43636 Bytes für lokale Variablen verbleiben. Das Maximum sind 81920 Bytes.
+  Der Sketch verwendet 479333 Bytes (45%) des Programmspeicherplatzes. Das Maximum sind 1044464 Bytes.
+  Globale Variablen verwenden 38124 Bytes (46%) des dynamischen Speichers, 43796 Bytes für lokale Variablen verbleiben. Das Maximum sind 81920 Bytes.
+
+  - Datei "Websites" void SiteFiles() "Dateien anzeigen" ändern
+  Der Sketch verwendet 479389 Bytes (45%) des Programmspeicherplatzes. Das Maximum sind 1044464 Bytes.
+  Globale Variablen verwenden 38408 Bytes (46%) des dynamischen Speichers, 43512 Bytes für lokale Variablen verbleiben. Das Maximum sind 81920 Bytes.
+
+  - Hostnamen bilden funktioniert nicht mehr, wird jetzt aus ESP.getChipId() gebildet
+  Der Sketch verwendet 478109 Bytes (45%) des Programmspeicherplatzes. Das Maximum sind 1044464 Bytes.
+  Globale Variablen verwenden 38412 Bytes (46%) des dynamischen Speichers, 43508 Bytes für lokale Variablen verbleiben. Das Maximum sind 81920 Bytes.
+
+  - Alle Einträge "SPIFFS" ersetzt durch "LittleFS"
+  Der Sketch verwendet 478133 Bytes (45%) des Programmspeicherplatzes. Das Maximum sind 1044464 Bytes.
+  Globale Variablen verwenden 38392 Bytes (46%) des dynamischen Speichers, 43528 Bytes für lokale Variablen verbleiben. Das Maximum sind 81920 Bytes.
+
+  2022-01-14
+  Aussetzer beim Schreiben in tägliche Logs
+  https://forum.arduino.cc/t/esp32-mit-spiffs-eine-speicher-katastrophe/621573/14
+  Umstellung SPIFFS -> LittleFS
+  Der Sketch verwendet 477469 Bytes (45%) des Programmspeicherplatzes. Das Maximum sind 1044464 Bytes.
+  Globale Variablen verwenden 38108 Bytes (46%) des dynamischen Speichers, 43812 Bytes für lokale Variablen verbleiben. Das Maximum sind 81920 Bytes.
+
+  Arduino 1.8.19, esp8266-3.0.2 - ESP_Gaszaehler_V1_93_Core302_LittleFS
+  -----------------------------------------------------------------------
+
+  2020-03-28
+  Aussetzer beim Schreiben in tägliche und monatliche Logs seit 19.03.2020, Data neu geschrieben, Sketch compiliert
+  Der Sketch verwendet 478256 Bytes (45%) des Programmspeicherplatzes. Das Maximum sind 1044464 Bytes.
+  Globale Variablen verwenden 36976 Bytes (45%) des dynamischen Speichers, 44944 Bytes für lokale Variablen verbleiben. Das Maximum sind 81920 Bytes.
+
+  Arduino 1.8.12, esp8266-2.6.3 - ESP_Gaszaehler_V1_92_Core263_ICACHE_RAM
+  -----------------------------------------------------------------------
 
   2020-02-14
   Interrupt-Routinen verschoben von Misc.ino in ESP_Gaszaehler_V1_91_Core263_ICACHE_RAM.ino
