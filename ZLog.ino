@@ -17,7 +17,7 @@
   https://github.com/esp8266/arduino-esp8266fs-plugin
   https://github.com/esp8266/arduino-esp8266fs-plugin/releases/
   kopieren nach:
-  D:\Eigene Dateien\Eigene Dokumente\Arduino\tools\ESP8266FS\tool\esp8266fs.jar
+  E:\Eigene Dateien\Eigene Dokumente\Arduino\tools\ESP8266FS\tool\esp8266fs.jar
 
   für ESP8266 Little Data-Upload-Tool installieren:
   https://github.com/earlephilhower/arduino-esp8266littlefs-plugin
@@ -69,6 +69,19 @@
   If you know all this and you knew how to do it, then you should have told me ...
 
   ---------------------------------------------------------------------------------------------------------------------
+  2022-06-04
+   - in Websites.ino void SiteSetup diverse Logausausgaben aus submit ans Ende verschoben
+  Der Sketch verwendet 479541 Bytes (45%) des Programmspeicherplatzes. Das Maximum sind 1044464 Bytes.
+  Globale Variablen verwenden 37584 Bytes (45%) des dynamischen Speichers, 44336 Bytes für lokale Variablen verbleiben. Das Maximum sind 81920 Bytes.
+
+  2022-06-02
+  - LittleFS.setTimeCallback (LittleFS filesystems file timestamp hinzugefügt), entfernt:
+  - extern "C" {
+  - #include "user_interface.h"
+  - }
+  Der Sketch verwendet 479733 Bytes (45%) des Programmspeicherplatzes. Das Maximum sind 1044464 Bytes.
+  Globale Variablen verwenden 37584 Bytes (45%) des dynamischen Speichers, 44336 Bytes für lokale Variablen verbleiben. Das Maximum sind 81920 Bytes.
+
   2022-01-27
   - add command restart
   - F-Macro in server.on...

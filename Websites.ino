@@ -199,22 +199,21 @@ nocheinmal:               // Sprungmarke für 2. Durchlauf bei 2 Jahren
 // ############################## Einstellungen diverse anzeigen ##############################
 void SiteSetup()  {
   String sResponse = "";                        // Response HTML
-  String qs0count = server.arg("s0count");      // S0-Count
   String submit = server.arg("submit");         // welcher Button wurde betätigt
+  String logtext = "";
   int countargs = server.args();                // Anzahl Argumente
   if (countargs != 0) {
-    if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-      SerialPrintLine();            // Trennlinie seriell ausgeben
+    if (SerialOutput == 1) {                    // serielle Ausgabe eingeschaltet
+      SerialPrintLine();                        // Trennlinie seriell ausgeben
     }
 #if DEBUG_OUTPUT_SERIAL == true
-    Serial.print(F("S0-Count: "));
-    Serial.println(qs0count);
     Serial.print(F("Button wurde betaetigt(submit): "));
     Serial.println(submit);
     Serial.print(F("Anzahl Argumente(countargs): "));
     Serial.println(countargs);
 #endif
     if (submit == "saves0count") {                        // Button "Zählerstand speichern" betätigt
+      String qs0count = server.arg("s0count");            // S0-Count
       // Prüfung auf Zahl einfügen
       qs0count.replace(",", ".");                         // Komma durch Punkt ersetzen
       if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
@@ -223,81 +222,58 @@ void SiteSetup()  {
       }
       s0_count_abs = round(qs0count.toFloat() * 100.0);   // "toFloat" funktioniert nicht richtig, deshalb runden
       DS1307_write_long(DS1307_ADDR_S0COUNTABS, s0_count_abs);     // save S0-Counter to DS1307 RAM
-      String logtext = F("Set Counter to: ");
+      logtext = F("Set Counter to: ");
       logtext += longToStr(s0_count_abs);
       logtext += F(" m³");
-      appendLogFile(logtext);
-      if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-        Serial.println(logtext);
-      }
     }
     if (submit == "resetMaxDay") {                                    // Button "Rückstellen" betätigt
       s0_count_max_day = 0;                                           // Maximum pro Tag löschen
       DS1307_write_long(DS1307_ADDR_MAXS0DAY, s0_count_max_day);      // Maximum pro Tag speichern
       DS1307_write_long(DS1307_ADDR_MAXS0DAYTIME, now());             // aktuelle Uhrzeit speichern
-      String logtext = F("Reset max consumption per day");
-      appendLogFile(logtext);
-      if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-        Serial.println(logtext);
-      }
+      logtext = F("Reset max consumption per day");
     }
     if (submit == "resetMaxMonth") {                                  // Button "Rückstellen" betätigt
       s0_count_max_month = 0;                                         // Maximum pro Monat löschen
       DS1307_write_long(DS1307_ADDR_MAXS0MONTH, s0_count_max_month);  // Maximum Monat speichern
       DS1307_write_long(DS1307_ADDR_MAXS0MONTHTIME, now());           // aktuelle Uhrzeit speichern
-      String logtext = F("Reset max consumption per month");
-      appendLogFile(logtext);
-      if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-        Serial.println(logtext);
-      }
+      logtext = F("Reset max consumption per month");
     }
     if (submit == "resetMaxYear") {                                   // Button "Rückstellen" betätigt
       s0_count_max_year = 0;                                          // Maximum pro Jahr löschen
       DS1307_write_long(DS1307_ADDR_MAXS0YEAR, s0_count_max_year);    // Maximum Jahr speichern
       DS1307_write_long(DS1307_ADDR_MAXS0YEARTIME, now());            // aktuelle Uhrzeit speichern
-      String logtext = F("Reset max consumption per year");
-      appendLogFile(logtext);
-      if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-        Serial.println(logtext);
-      }
+      logtext += F("Reset max consumption per year");
     }
     if (submit == "sets0trip1") {                                     // Button "Rückstellen" betätigt
       EEPROM_write_long(EEPROM_ADDR_S0TRIP1, s0_count_abs);           // S0-Count Trip begin set to S0-Count
       EEPROM_write_long(EEPROM_ADDR_S0TRIP1TIME, now());              // S0-Count Trip time set
-      String logtext = F("Reset Counter 1 to: ");
+      logtext = F("Reset Counter 1 to: ");
       logtext += longToStr(s0_count_abs);
       logtext += F(" m³");
-      appendLogFile(logtext);
-      if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-        Serial.println(logtext);
-      }
     }
     if (submit == "sets0trip2") {                                     // Button "Rückstellen" betätigt
       EEPROM_write_long(EEPROM_ADDR_S0TRIP2, s0_count_abs);           // S0-Count Trip begin set to S0-Count
       EEPROM_write_long(EEPROM_ADDR_S0TRIP2TIME, now());              // S0-Count Trip time set
-      String logtext = F("Reset Counter 2 to: ");
+      logtext = F("Reset Counter 2 to: ");
       logtext += longToStr(s0_count_abs);
       logtext += F(" m³");
-      appendLogFile(logtext);
-      if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-        Serial.println(logtext);
-      }
     }
     if (submit == "setser") {
       SerialOutput = !SerialOutput;// toggle boolean
       EEPROM_write_byte(EEPROM_ADDR_SERIALOUTPUT, SerialOutput);                        // write byte at address
-      String logtext = F("Serial Output: ");
+      logtext = F("Serial Output: ");
       if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
         logtext += F("on");
       } else {                    // serielle Ausgabe ausgeschaltet
         logtext += F("off");
       }
-      appendLogFile(logtext);
-      if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-        Serial.println(logtext);
-      }
+    }
+    appendLogFile(logtext);
+    if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
+      Serial.println(logtext);
     }
   }
+
   // Beginn HTML
   insertHeaderCSS(sResponse);                        // Header und CCS einfügen
   sResponse += F("<link rel=\"stylesheet\" type=\"text/css\" href=\"static/button.css\">");

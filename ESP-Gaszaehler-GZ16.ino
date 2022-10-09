@@ -8,23 +8,19 @@
 #include <PubSubClient.h>
 #include <Wire.h>
 #include <SPI.h>
-extern "C" {
-#include "user_interface.h"
-}
-// #include <detail\RequestHandlersImpl.h>
 
 #define HW_VERSION_1                // Version 1: ESP-12E, auskommentieren für Version 2 (MR) mit NodeMCU
 
 #ifdef HW_VERSION_1
 ADC_MODE(ADC_VCC);                  // vcc read
 #else
-const float ADC_DIV = 190.0;        // Divisor für Batteriespannung bei HW-Version 2
+const float ADC_DIV = 190.0;        // Divisor für Batteriespannung bei HW-Version 2 (MR)
 #endif
 
 #define HOSTNAME                    "GZ16-ESP-" // Hostname, 3 Byte Chip-ID werden angehangen
 
 #define VERSION                     1
-#define BUILD                       93
+#define BUILD                       95
 #define DEBUG_OUTPUT_SERIAL         false
 //#define DEBUG_OUTPUT_SERIAL        true
 
@@ -272,6 +268,7 @@ void setup (void) {
 
   // Initialize file system.
   SerialPrintLine();            // Trennlinie seriell ausgeben
+  LittleFS.setTimeCallback(LittleFsTimeCallback); // for LittleFS filesystems file timestamp
   if (!LittleFS.begin()) {
     //filesystem = false;
     Serial.println(F("LittleFS Failed to mount file system"));
