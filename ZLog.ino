@@ -69,6 +69,12 @@
   If you know all this and you knew how to do it, then you should have told me ...
 
   ---------------------------------------------------------------------------------------------------------------------
+  2022-12-19
+  - client.setServer(eMqttBroker.c_str(), eMqttPort); // Sets the server details.
+    gelöscht in void startStation() und bool start_WPS_connect(), eingefügt in if (MqttConnect == true)
+  Der Sketch verwendet 479509 Bytes (45%) des Programmspeicherplatzes. Das Maximum sind 1044464 Bytes.
+  Globale Variablen verwenden 37568 Bytes (45%) des dynamischen Speichers, 44352 Bytes für lokale Variablen verbleiben. Das Maximum sind 81920 Bytes.
+
   2022-06-04
    - in Websites.ino void SiteSetup diverse Logausausgaben aus submit ans Ende verschoben
   Der Sketch verwendet 479541 Bytes (45%) des Programmspeicherplatzes. Das Maximum sind 1044464 Bytes.

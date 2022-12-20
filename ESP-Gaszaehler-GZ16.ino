@@ -20,7 +20,7 @@ const float ADC_DIV = 190.0;        // Divisor für Batteriespannung bei HW-Vers
 #define HOSTNAME                    "GZ16-ESP-" // Hostname, 3 Byte Chip-ID werden angehangen
 
 #define VERSION                     1
-#define BUILD                       95
+#define BUILD                       96
 #define DEBUG_OUTPUT_SERIAL         false
 //#define DEBUG_OUTPUT_SERIAL        true
 
@@ -499,8 +499,9 @@ void loop ( void ) {
           if (!client.connected()) {            // MQTT nicht connected
             digitalWrite(LED_red, !digitalRead(LED_red));   // LED toggle
             // Attempt to connect
-            if (eMqttUsername.length() == 0) {                  // no MQTT Username
-              client.connect(OwnStationHostname.c_str());       // Connects the client without authentification
+            client.setServer(eMqttBroker.c_str(), eMqttPort); // Sets the server details.
+            if (eMqttUsername.length() == 0) {                // no MQTT Username
+              client.connect(OwnStationHostname.c_str());     // Connects the client without authentification
             } else {
               client.connect(OwnStationHostname.c_str(), eMqttUsername.c_str(), eMqttPassword.c_str()); // Connects with authentification
             }

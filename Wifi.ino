@@ -17,8 +17,6 @@ void startStation() {            //connect to Wifi in Station Mode
   httpUpdater.setup(&server);
   MDNS.addService("http", "tcp", 80);
   createWebServer();
-  client.setServer(eMqttBroker.c_str(), eMqttPort); // Sets the server details.
-  //client.setCallback(callback);
 }
 
 // Start Accesspoint
@@ -67,8 +65,6 @@ bool start_WPS_connect() {              // Start Wifi WPS Connection
       httpUpdater.setup(&server);
       MDNS.addService("http", "tcp", 80);
       createWebServer();
-      client.setServer(eMqttBroker.c_str(), eMqttPort); // Sets the server details.
-      //client.setCallback(callback);
       logText = F("Wifi WPS connected to: ");
       logText += qssid;
       appendLogFile(logText);
