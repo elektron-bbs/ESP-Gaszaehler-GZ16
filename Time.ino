@@ -7,21 +7,31 @@
   unsigned long dauer = millis() - start;
   Serial.print(F("Dauer: "));
   Serial.print(dauer);
-  Serial.println(F(" mSek"));
+  Serial.println(F(" mS"));
+
+  Messung Dauer in Mikrosekunden einer Ausführung
+  //vor Beginn einfügen:
+  unsigned long start = micros();
+
+  //nach Ende einfügen
+  unsigned long dauer = micros() - start;
+  Serial.print(F("Dauer: "));
+  Serial.print(dauer);
+  Serial.println(F(" µS"));
 */
 
 // Messung Dauer in Millisekunden einer Ausführung
 //unsigned long startOperation = millis();   // benötigte Rechenzeit für Operation ermitteln (vor Beginn einfügen)
 //TimeOfOperation(startOperation);           // benötigte Rechenzeit für Operation (nach Ende einfügen)
-#if DEBUG_OUTPUT_SERIAL == true
-void TimeOfOperation(unsigned long startOperation) {
-  String logText = F("Time for operation: ");
-  logText += millis() - startOperation;
-  logText += F(" mSec");
-  Serial.println(logText);
-  appendLogFile(logText);
-}
-#endif
+//#if DEBUG_OUTPUT_SERIAL
+//void TimeOfOperation(unsigned long startOperation) {
+//  String logText = F("Time for operation: ");
+//  logText += millis() - startOperation;
+//  logText += F(" mSec");
+//  Serial.println(logText);
+//  appendLogFile(logText);
+//}
+//#endif
 
 void DS1307_setTime() {
   Wire.beginTransmission(DS1307_ADDRESS);
@@ -78,7 +88,7 @@ long DS1307_read_long(byte address) {
 }
 
 void DS1307_write_long(byte address, long value) {
-#if DEBUG_OUTPUT_SERIAL == true
+#if defined DEBUG_OUTPUT_SERIAL_DS1307
   Serial.print(F("DS1307 write long at address: "));
   Serial.print(address);
   Serial.print(F(" - "));
@@ -100,6 +110,7 @@ void DS1307_write_long(byte address, long value) {
   Wire.endTransmission();
 }
 
+#if defined DEBUG_OUTPUT_SERIAL_DS1307
 void DS1307_read_table() {
   SerialPrintLine();            // Trennlinie seriell ausgeben
   Serial.println(F("DS1307 read all bytes"));
@@ -138,9 +149,12 @@ void DS1307_read_table() {
   }
   SerialPrintLine();            // Trennlinie seriell ausgeben
 }
+#endif
 
 void DS1307_clear_ram() {
+#if defined DEBUG_OUTPUT_SERIAL_DS1307
   Serial.println(F("DS1307 clear RAM"));
+#endif
   for (int x = 8; x < 64; x++) {
     //The Wire library has a buffer of 32 bytes!!!
     Wire.beginTransmission (DS1307_ADDRESS);
@@ -275,28 +289,28 @@ boolean setTimeNtp() {
       t += 3600;                                // add one hour if DST active
     }
     ntpSyncTimeDeviation = now() - t;           // Abweichung Uhrzeit
-    if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-      Serial.print(F("Systime: "));
-      Serial.print(now());
-      Serial.println(F(" Seconds since 01.01.1970"));
-    }
+#ifdef DEBUG_OUTPUT_SERIAL_WIFI
+    Serial.print(F("Systime: "));
+    Serial.print(now());
+    Serial.println(F(" Seconds since 01.01.1970"));
+#endif
     setTime(t);                                 // Set Time
     DS1307_setTime();                          // set date and time to DS1307
     lastSetTime = now();
-    if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-      Serial.print(F("NTPtime: "));
-      Serial.print(t);
-      Serial.println(F(" Seconds since 01.01.1970"));
-      Serial.print(F("Deviation: "));
-      Serial.print(ntpSyncTimeDeviation);
-      Serial.println(F(" Seconds"));
-      Serial.print(F("Date: "));
-      Serial.println(DateToString(now()));        // return Date String from Timestamp
-      Serial.print(F("Day of week: "));
-      Serial.println(weekday());                  // Day of the week, Sunday is day 1
-      Serial.print(F("Time: "));
-      Serial.println(TimeToString(now()));        // return Time String from Timestamp
-    }
+#ifdef DEBUG_OUTPUT_SERIAL_WIFI
+    Serial.print(F("NTPtime: "));
+    Serial.print(t);
+    Serial.println(F(" Seconds since 01.01.1970"));
+    Serial.print(F("Deviation: "));
+    Serial.print(ntpSyncTimeDeviation);
+    Serial.println(F(" Seconds"));
+    Serial.print(F("Date: "));
+    Serial.println(DateToString(now()));        // return Date String from Timestamp
+    Serial.print(F("Day of week: "));
+    Serial.println(weekday());                  // Day of the week, Sunday is day 1
+    Serial.print(F("Time: "));
+    Serial.println(TimeToString(now()));        // return Time String from Timestamp
+#endif
     // ntpSyncInterval = 7200;                     // 2 Stunden
     // ntpSyncInterval = 21600;                    // 6 Stunden
     ntpSyncInterval = 86400;                    // 24 Stunden
@@ -317,10 +331,9 @@ unsigned long getNtpTime() {
   udp.begin(123);
   //String log = F("NTP: NTP sync requested");
   //addLog(LOG_LEVEL_DEBUG_MORE, log);
-  if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-    Serial.println(F("NTP: sync requested"));
-  }
-
+#ifdef DEBUG_OUTPUT_SERIAL_WIFI
+  Serial.println(F("NTP: sync requested"));
+#endif
   const int NTP_PACKET_SIZE = 48;         // NTP time is in the first 48 bytes of message
   byte packetBuffer[NTP_PACKET_SIZE];     //buffer to hold incoming & outgoing packets
 
@@ -332,10 +345,10 @@ unsigned long getNtpTime() {
   //log = F("NTP: NTP send to ");
   //log += host;
   //addLog(LOG_LEVEL_DEBUG_MORE, log);
-  if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-    Serial.print(F("NTP: send to "));
-    Serial.println(host);
-  }
+#ifdef DEBUG_OUTPUT_SERIAL_WIFI
+  Serial.print(F("NTP: send to "));
+  Serial.println(host);
+#endif
   while (udp.parsePacket() > 0) ;               // discard any previously received packets
 
   memset(packetBuffer, 0, NTP_PACKET_SIZE);
@@ -362,18 +375,14 @@ unsigned long getNtpTime() {
       secsSince1900 |= (unsigned long)packetBuffer[41] << 16;
       secsSince1900 |= (unsigned long)packetBuffer[42] << 8;
       secsSince1900 |= (unsigned long)packetBuffer[43];
-      //log = F("NTP: NTP replied!");
-      //addLog(LOG_LEVEL_DEBUG_MORE, log);
-      if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-        Serial.println(F("NTP: replied!"));
-      }
+#ifdef DEBUG_OUTPUT_SERIAL_WIFI
+      Serial.println(F("NTP: replied!"));
+#endif
       return secsSince1900 - 2208988800UL + TimeZone * 3600;
     }
   }
-  //log = F("NTP: No reply");
-  //addLog(LOG_LEVEL_DEBUG_MORE, log);
-  if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-    Serial.println(F("NTP: no reply"));
-  }
+#ifdef DEBUG_OUTPUT_SERIAL_WIFI
+  Serial.println(F("NTP: no reply"));
+#endif
   return 0;
 }

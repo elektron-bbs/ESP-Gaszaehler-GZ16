@@ -1,4 +1,9 @@
-/*
+/* https://github.com/esp8266/Arduino/tree/master
+  Einstellungen:
+  --------------
+  Board: NodeMCU 1.0 (ESP-12E Module)
+  Flash-Size: 4MB (FS:3MB OTA:~512KB)
+
   Bibliotheken installieren:
   --------------------------
   Time          by Michael Margolis
@@ -69,6 +74,81 @@
   If you know all this and you knew how to do it, then you should have told me ...
 
   ---------------------------------------------------------------------------------------------------------------------
+  2023-11-05 - ESP_Gaszaehler_V1_97_Core312_WPS
+  . Variables and constants in RAM (global, static), used 37368 / 80192 bytes (46%)
+  ║   SEGMENT  BYTES    DESCRIPTION
+  ╠══ DATA     1552     initialized variables
+  ╠══ RODATA   4168     constants
+  ╚══ BSS      31648    zeroed variables
+  . Instruction RAM (IRAM_ATTR, ICACHE_RAM_ATTR), used 61863 / 65536 bytes (94%)
+  ║   SEGMENT  BYTES    DESCRIPTION
+  ╠══ ICACHE   32768    reserved space for flash instruction cache
+  ╚══ IRAM     29095    code in IRAM
+  . Code in flash (default, ICACHE_FLASH_ATTR), used 410176 / 1048576 bytes (39%)
+  ║   SEGMENT  BYTES    DESCRIPTION
+  ╚══ IROM     410176   code in flash
+
+  2023-10-22 - ESP_Gaszaehler_V1_97_Core312_WPS.ino
+  - MDNS entfernt
+  - WPS aktualisiert
+  - Webseiten überarbeitet
+  - Struktur LittleFS geändert (update data erforderlich!)
+  . Variables and constants in RAM (global, static), used 37492 / 80192 bytes (46%)
+  ║   SEGMENT  BYTES    DESCRIPTION
+  ╠══ DATA     1552     initialized variables
+  ╠══ RODATA   4300     constants
+  ╚══ BSS      31640    zeroed variables
+  . Instruction RAM (IRAM_ATTR, ICACHE_RAM_ATTR), used 61863 / 65536 bytes (94%)
+  ║   SEGMENT  BYTES    DESCRIPTION
+  ╠══ ICACHE   32768    reserved space for flash instruction cache
+  ╚══ IRAM     29095    code in IRAM
+  . Code in flash (default, ICACHE_FLASH_ATTR), used 411864 / 1048576 bytes (39%)
+  ║   SEGMENT  BYTES    DESCRIPTION
+  ╚══ IROM     411864   code in flash
+
+  2023-09-07 - ESP_Gaszaehler_V1_97_Core312_WLAN
+  . Variables and constants in RAM (global, static), used 37624 / 80192 bytes (46%)
+  ║   SEGMENT  BYTES    DESCRIPTION
+  ╠══ DATA     1552     initialized variables
+  ╠══ RODATA   4280     constants
+  ╚══ BSS      31792    zeroed variables
+  . Instruction RAM (IRAM_ATTR, ICACHE_RAM_ATTR), used 62231 / 65536 bytes (94%)
+  ║   SEGMENT  BYTES    DESCRIPTION
+  ╠══ ICACHE   32768    reserved space for flash instruction cache
+  ╚══ IRAM     29463    code in IRAM
+  . Code in flash (default, ICACHE_FLASH_ATTR), used 431884 / 1048576 bytes (41%)
+  ║   SEGMENT  BYTES    DESCRIPTION
+  ╚══ IROM     431884   code in flash
+
+  2023-09-04 - ESP_Gaszaehler_V1_97_Core312_opt2
+  Websites: sResponse.reserve(8192);
+  geändert: Einstellungen WLAN, verbindet mit gewähltem AP
+  geändert: connectWifiBestRssi(); // connect to AP with best RSSI
+
+  Arduino 1.8.19, esp8266-3.1.2 - ESP_Gaszaehler_V1_97_Core312_WLAN
+  geändert: sResponse += F(
+  geändert: zusätzliche Zeile einfügen bei Fehler IP Adresse
+  5 * geändert:
+  // sResponse += String(ipadr[0]) + '.' + String(ipadr[1]) + '.' + String(ipadr[2]) + '.' + String(ipadr[3]);
+  sprintf(str, "%d.%d.%d.%d", ipadr[0], ipadr[1], ipadr[2], ipadr[3]);
+  sResponse += str;
+  Seite Einstellungen WLAN 4 * <td> ersetzt durch <td colspan=\"4\">
+  133 * colspan=\"1\" entfernt
+  . Variables and constants in RAM (global, static), used 37624 / 80192 bytes (46%)
+  ║   SEGMENT  BYTES    DESCRIPTION
+  ╠══ DATA     1552     initialized variables
+  ╠══ RODATA   4280     constants
+  ╚══ BSS      31792    zeroed variables
+  . Instruction RAM (IRAM_ATTR, ICACHE_RAM_ATTR), used 62231 / 65536 bytes (94%)
+  ║   SEGMENT  BYTES    DESCRIPTION
+  ╠══ ICACHE   32768    reserved space for flash instruction cache
+  ╚══ IRAM     29463    code in IRAM
+  . Code in flash (default, ICACHE_FLASH_ATTR), used 432412 / 1048576 bytes (41%)
+  ║   SEGMENT  BYTES    DESCRIPTION
+  ╚══ IROM     432412   code in flash
+
+  Arduino 1.8.19, esp8266-3.1.2 - ESP_Gaszaehler_V1_97_Core312_opt
+  -----------------------------------------------------------------------
   2022-12-19
   - client.setServer(eMqttBroker.c_str(), eMqttPort); // Sets the server details.
     gelöscht in void startStation() und bool start_WPS_connect(), eingefügt in if (MqttConnect == true)

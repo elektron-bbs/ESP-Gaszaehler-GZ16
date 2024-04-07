@@ -1,8 +1,10 @@
 unsigned int LittleFSReadS0Count(String FileName, byte zeitraum) {
+#ifdef DEBUG_OUTPUT_SERIAL_LITTLEFS
   SerialPrintLine();            // Trennlinie seriell ausgeben
   Serial.println(F("Read S0-Counts from LittleFS"));
   Serial.print(F("Filename: "));
   Serial.println(FileName);
+#endif
   String Line = "";
   String da = "";             // Day
   String mo = "";             // Month
@@ -49,25 +51,29 @@ unsigned int LittleFSReadS0Count(String FileName, byte zeitraum) {
           S0_Count = S0_Count + s0_count_int;
         }
       }
+#ifdef DEBUG_OUTPUT_SERIAL_LITTLEFS
       Serial.println(Line);
+#endif
     }
     LogFile.close();
   }
+#ifdef DEBUG_OUTPUT_SERIAL_LITTLEFS
   Serial.print(F("S0-Pulse count:   "));
   Serial.println(S0_Count);
+#endif
   //Serial.print(F("S0-Pulse max count:  "));
   //Serial.println(s0_count_abs);
   return S0_Count;
 }
 
 void LittleFSWriteS0Count(String FileName, unsigned int S0_Count) {
-  if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-    Serial.println(F("Write S0-Counts to LittleFS"));
-    Serial.print(F("Filename: "));
-    Serial.println(FileName);
-    Serial.print(F("S0-Count: "));
-    Serial.println(S0_Count);
-  }
+#ifdef DEBUG_OUTPUT_SERIAL_LITTLEFS
+  Serial.println(F("Write S0-Counts to LittleFS"));
+  Serial.print(F("Filename: "));
+  Serial.println(FileName);
+  Serial.print(F("S0-Count: "));
+  Serial.println(S0_Count);
+#endif
   //File LogFile;
   //  if (year() < 2016) {
   //    LogFile = LittleFS.open(FileName, "w");   // Open for truncate and write
@@ -80,9 +86,9 @@ void LittleFSWriteS0Count(String FileName, unsigned int S0_Count) {
     logtext += (FileName);
     logtext += F(" open failed");
     appendLogFile(logtext);
-    if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-      Serial.println(logtext);
-    }
+#ifdef DEBUG_OUTPUT_SERIAL_LITTLEFS
+    Serial.println(logtext);
+#endif
   } else {
     LogFile.print(DateTimeToString(now()));    // return Date and Time String from Timestamp
     LogFile.print(' ');
@@ -95,7 +101,7 @@ void LittleFSWriteS0Count(String FileName, unsigned int S0_Count) {
 
 // for LittleFS filesystems file timestamp
 time_t LittleFsTimeCallback() {
-    return now(); // UNIX timestamp
+  return now(); // UNIX timestamp
 }
 
 /*
@@ -132,149 +138,169 @@ time_t LittleFsTimeCallback() {
   432   01B0       64     1    495     64   eMqttBroker         MQTT Broker                    String
   496   01F0       16     1    511     16
   512   0200       16     1    527     16
+  528   0210       64     1    591     64   eMqttUsername       MQTT Username                  String
+  592   0250       64     1    655     64   eMqttPassword       MQTT Password                  String
+
   528   0210       64     5    847    320   eMqttTopic[5]       MQTT Topic                     String
   848   0350        1     5    852      5   eMqttSubscribe[5]   MQTT Subscribe                 boolean
 */
 
 void eeprom_alldata_read() {                                        // read all data from EEPROM
-  SerialPrintLine();            // Trennlinie seriell ausgeben
-  Serial.println(F("Read settings from EEPROM:"));
   essid = EEPROM_read_string(EEPROM_ADDR_SSID);                          // read eeprom for ssid
-  Serial.print(F("EEPROM SSID: "));
-  Serial.println(essid);
+  if (essid.length() > 32) {
+    essid = "";
+  }
+  // essid = "Test"; // versucht sich fortlaufend mit SSID Test zu verbinden
+  // essid = ""; // max. 4 x Wifi WPS starten, wenn erfolglos dann Wifi Access Point GZ16-ESP-778577 starten
   epass = EEPROM_read_string(EEPROM_ADDR_PASS);                   // read eeprom for wifi password
-  Serial.print(F("EEPROM Password: "));
-  Serial.println(epass);
+  if (epass.length() > 64) {
+    epass = "";
+  }
+  // epass=""; // max. 4 x Wifi WPS starten, wenn erfolglos dann Wifi Access Point GZ16-ESP-778577 starten
   edhcp = EEPROM.read(EEPROM_ADDR_DHCP);                                     //read DHCP on or off
   if (edhcp > 1) {
     edhcp = 1;                                                                          // DHCP on
     EEPROM_write_boolean(EEPROM_ADDR_DHCP, 1);                         // write boolean at address
   }
-  Serial.print(F("EEPROM DHCP on/off: "));
-  Serial.println(edhcp);
   eip = EEPROM_read_ipaddress(EEPROM_ADDR_IP);                // read IP-Address  static IP eip[4]
-  Serial.print(F("EEPROM IP-Address: "));
-  Serial.println(eip);
   edns = EEPROM_read_ipaddress(EEPROM_ADDR_DNS);         // read IPAddress Domain Name Server edns
-  Serial.print(F("EEPROM Domain Name Server: "));
-  Serial.println(edns);
   esgw = EEPROM_read_ipaddress(EEPROM_ADDR_GATEWAY);       // read IPAddress Standard-Gateway esgw
-  Serial.print(F("EEPROM Standard-Gateway: "));
-  Serial.println(esgw);
   esnm = EEPROM_read_ipaddress(EEPROM_ADDR_NETMASK);            // read IPAddress SubNetMask  esnm
-  Serial.print(F("EEPROM Subnetzmaske: "));
-  Serial.println(esnm);
   ntpServerName[2] = EEPROM_read_string(EEPROM_ADDR_NTPSERVERNAME); // read eeprom NTP Server Name
-  Serial.print(F("EEPROM NTP Server: "));
-  Serial.println(ntpServerName[2]);
+  if (ntpServerName[2].length() > 64) {
+    ntpServerName[2] = "";
+  }
   ntpServerNr = EEPROM.read(EEPROM_ADDR_NTPSERVERNUMBER);       // read selected NTP Server Number
   if (ntpServerNr > 3) {
     ntpServerNr = 3;
     EEPROM_write_byte(EEPROM_ADDR_NTPSERVERNUMBER, 3);                    // write byte at address
   }
-  Serial.print(F("EEPROM NTP Server select Number: "));
-  Serial.println(ntpServerNr);
-  Serial.print(F("EEPROM NTP Server selected: "));
-  Serial.println(ntpServerName[ntpServerNr]);
   DST = EEPROM.read(EEPROM_ADDR_DST);                                 // read Daylight Saving Time
   if (DST > 1) {
     DST = 0;
     EEPROM_write_boolean(EEPROM_ADDR_DST, 0);                          // write boolean at address
   }
-  Serial.print(F("EEPROM DST: "));
-  Serial.println(DST);
   eMqttBroker = EEPROM_read_string(EEPROM_ADDR_MQTTBROKER);             // read MQTT Broker from EEPROM
-  if (eMqttBroker.length() == 0) {
+  if (eMqttBroker.length() == 0 || eMqttBroker.length() > 64) {
     MqttConnect = false;
     EEPROM_write_boolean(EEPROM_ADDR_MQTTCONNECT, 0);                   // write boolean at address
   }
-  Serial.print(F("EEPROM MQTT-Broker: "));
-  Serial.println(eMqttBroker);
   eMqttUsername = EEPROM_read_string(EEPROM_ADDR_MQTTUSERNAME);         // read MQTT Username from EEPROM
-  Serial.print(F("EEPROM MQTT Username: "));
-  Serial.println(eMqttUsername);
+  if (eMqttUsername.length() > 64) {
+    eMqttUsername = "";
+  }
   eMqttPassword = EEPROM_read_string(EEPROM_ADDR_MQTTPASSWORD);         // read MQTT Password from EEPROM
-  Serial.print(F("EEPROM MQTT Password: "));
-  Serial.println(eMqttPassword);
+  if (eMqttPassword.length() > 64) {
+    eMqttPassword = "";
+  }
   eMqttPort = EEPROM_read_int(EEPROM_ADDR_MQTTPORT);                    // read MQTT Port from EEPROM
   if (eMqttPort == 0xFFFF) {
     eMqttPort = 1883;
     EEPROM_write_int(EEPROM_ADDR_MQTTPORT, eMqttPort);                  // write MQTT Server Port to EEPROM
   }
-  Serial.print(F("EEPROM MQTT-Port: "));
-  Serial.println(eMqttPort);
   MqttConnect = EEPROM.read(EEPROM_ADDR_MQTTCONNECT);                   // read MQTT-Connect from EEPROM
   if (MqttConnect > 1) {
     MqttConnect = false;
     EEPROM_write_boolean(EEPROM_ADDR_MQTTCONNECT, 0);                   // write boolean at address
   }
-  Serial.print(F("EEPROM MQTT-Connect: "));
-  Serial.println(MqttConnect);
-
   eMqttPublish_s0_count_abs = EEPROM.read(EEPROM_ADDR_MQTTPUBLISHABS);     // read MQTT publish S0-Counter absolut
   if (eMqttPublish_s0_count_abs > 1) {
     eMqttPublish_s0_count_abs = 0;
     EEPROM_write_boolean(EEPROM_ADDR_MQTTPUBLISHABS, 0);                   // write boolean at address
   }
-  Serial.print(F("EEPROM MQTT publish S0-Counter absolut: "));
-  Serial.println(eMqttPublish_s0_count_abs);
   eMqttPublish_s0_count_mom = EEPROM.read(EEPROM_ADDR_MQTTPUBLISHMOM);     // read MQTT publish S0-Counter Moment
   if (eMqttPublish_s0_count_mom > 1) {
     eMqttPublish_s0_count_mom = 0;
     EEPROM_write_boolean(EEPROM_ADDR_MQTTPUBLISHMOM, 0);                   // write boolean at address
   }
-  Serial.print(F("EEPROM MQTT publish S0-Counter Momentan: "));
-  Serial.println(eMqttPublish_s0_count_mom);
   eMqttPublish_rssi = EEPROM.read(EEPROM_ADDR_MQTTPUBLISHRSSI);             // read MQTT publish WLAN RSSI
   if (eMqttPublish_rssi > 1) {
     eMqttPublish_rssi = 0;
     EEPROM_write_boolean(EEPROM_ADDR_MQTTPUBLISHRSSI, 0);                   // write boolean at address
   }
-  Serial.print(F("EEPROM MQTT publish WLAN RSSI: "));
-  Serial.println(eMqttPublish_rssi);
   eMqttPublish_recon = EEPROM.read(EEPROM_ADDR_MQTTPUBLISHRECON);             // read MQTT publish WLAN Reconnects
   if (eMqttPublish_recon > 1) {
     eMqttPublish_recon = 0;
     EEPROM_write_boolean(EEPROM_ADDR_MQTTPUBLISHRECON, 0);                   // write boolean at address
   }
-  Serial.print(F("EEPROM MQTT publish WLAN Reconnects: "));
-  Serial.println(eMqttPublish_recon);
-
   eMqttPublish_Intervall = EEPROM.read(EEPROM_ADDR_MQTTINTERVALL);         // read EEPROM MQTT publish intervall
   if (eMqttPublish_Intervall > 60) {
     eMqttPublish_Intervall = 5;
     EEPROM_write_byte(EEPROM_ADDR_MQTTINTERVALL, 5);                        // write byte at address
   }
-  Serial.print(F("EEPROM MQTT publish interval: "));
-  Serial.println(eMqttPublish_Intervall);
-
   SerialOutput = EEPROM.read(EEPROM_ADDR_SERIALOUTPUT);           // read EEPROM serial output on/off
   if (SerialOutput > 1) {
     SerialOutput = 0;                                                       // serial output off
     EEPROM_write_byte(EEPROM_ADDR_SERIALOUTPUT, 0);                        // write byte at address
   }
-  Serial.print(F("EEPROM Serial Output: "));
-  Serial.println(SerialOutput);
-
   estart = EEPROM.read(EEPROM_ADDR_START);                                  // read EEPROM Start Counter
   if (estart == 255) {
     estart = 0;
     EEPROM_write_byte(EEPROM_ADDR_START, 0);                                // write byte at address
   }
+#ifdef DEBUG_OUTPUT_SERIAL_EEPROM
+  SerialPrintLine();            // Trennlinie seriell ausgeben
+  Serial.println(F("Read settings from EEPROM:"));
+  Serial.print(F("EEPROM SSID: "));
+  Serial.println(essid);
+  Serial.print(F("EEPROM Password: "));
+  Serial.println(epass);
+  Serial.print(F("EEPROM DHCP on/off: "));
+  Serial.println(edhcp);
+  Serial.print(F("EEPROM IP-Address: "));
+  Serial.println(eip);
+  Serial.print(F("EEPROM Domain Name Server: "));
+  Serial.println(edns);
+  Serial.print(F("EEPROM Standard-Gateway: "));
+  Serial.println(esgw);
+  Serial.print(F("EEPROM Subnetzmaske: "));
+  Serial.println(esnm);
+  Serial.print(F("EEPROM NTP Server: "));
+  Serial.println(ntpServerName[2]);
+  Serial.print(F("EEPROM NTP Server select Number: "));
+  Serial.println(ntpServerNr);
+  Serial.print(F("EEPROM NTP Server selected: "));
+  Serial.println(ntpServerName[ntpServerNr]);
+  Serial.print(F("EEPROM DST: "));
+  Serial.println(DST);
+  Serial.print(F("EEPROM MQTT-Broker: "));
+  Serial.println(eMqttBroker);
+  Serial.print(F("EEPROM MQTT Username: "));
+  Serial.println(eMqttUsername);
+  Serial.print(F("EEPROM MQTT Password: "));
+  Serial.println(eMqttPassword);
+  Serial.print(F("EEPROM MQTT-Port: "));
+  Serial.println(eMqttPort);
+  Serial.print(F("EEPROM MQTT-Connect: "));
+  Serial.println(MqttConnect);
+  Serial.print(F("EEPROM MQTT publish S0-Counter absolut: "));
+  Serial.println(eMqttPublish_s0_count_abs);
+  Serial.print(F("EEPROM MQTT publish S0-Counter Momentan: "));
+  Serial.println(eMqttPublish_s0_count_mom);
+  Serial.print(F("EEPROM MQTT publish WLAN RSSI: "));
+  Serial.println(eMqttPublish_rssi);
+  Serial.print(F("EEPROM MQTT publish WLAN Reconnects: "));
+  Serial.println(eMqttPublish_recon);
+  Serial.print(F("EEPROM MQTT publish interval: "));
+  Serial.println(eMqttPublish_Intervall);
+  Serial.print(F("EEPROM Serial Output: "));
+  Serial.println(SerialOutput);
   Serial.print(F("EEPROM Neustarts: "));
   Serial.println(estart);
-
   SerialPrintLine();            // Trennlinie seriell ausgeben
   Serial.println(F("Read data from EEPROM:"));
+#endif
 
   // S0-Count Start Trip 1 lesen
   unsigned long l = EEPROM_read_long(EEPROM_ADDR_S0TRIP1);                  // read S0-Count Trip begin
   if (l != 0xFFFFFFFF) {                                     // Prüfung ob gelöscht
+#ifdef DEBUG_OUTPUT_SERIAL_EEPROM
     Serial.print(F("EEPROM S0-Count start trip 1:   "));
     Serial.print(l);
     Serial.print(F(" - "));
     l = EEPROM_read_long(EEPROM_ADDR_S0TRIP1TIME);            // read timestamp
     Serial.println(DateToString(l));
+#endif
   } else {
     EEPROM_write_long(EEPROM_ADDR_S0TRIP1, s0_count_abs);     // S0-Count Trip begin set to S0-Count
     EEPROM_write_long(EEPROM_ADDR_S0TRIP1TIME, now());        // S0-Count Trip time set
@@ -283,11 +309,13 @@ void eeprom_alldata_read() {                                        // read all 
   // S0-Count Start Trip 2 lesen
   l = EEPROM_read_long(EEPROM_ADDR_S0TRIP2);                  // read S0-Count Trip begin
   if (l != 0xFFFFFFFF) {                                     // Prüfung ob gelöscht
+#ifdef DEBUG_OUTPUT_SERIAL_EEPROM
     Serial.print(F("EEPROM S0-Count start trip 2:   "));
     Serial.print(l);
     Serial.print(F(" - "));
     l = EEPROM_read_long(EEPROM_ADDR_S0TRIP2TIME);            // read timestamp
     Serial.println(DateToString(l));
+#endif
   } else {
     EEPROM_write_long(EEPROM_ADDR_S0TRIP2, s0_count_abs);     // S0-Count Trip begin set to S0-Count
     EEPROM_write_long(EEPROM_ADDR_S0TRIP2TIME, now());        // S0-Count Trip time set
@@ -295,7 +323,10 @@ void eeprom_alldata_read() {                                        // read all 
 }
 
 void ds1307_alldata_read() {                                        // read all data from DS1307 RAM
+#if defined DEBUG_OUTPUT_SERIAL_DS1307
+  SerialPrintLine();            // Trennlinie seriell ausgeben
   Serial.println(F("Read data from DS1307 RAM:"));
+#endif
   unsigned long l = DS1307_read_long(DS1307_ADDR_S0COUNTHOUR);   // read S0-Counter hour from DS1307 RAM
   if (l != 0xFFFFFFFF) {                                         // Prüfung ob gelöscht
     s0_count_hour = l;                                            // S0-Counter hour from DS1307 RAM
@@ -315,11 +346,13 @@ void ds1307_alldata_read() {                                        // read all 
   l = DS1307_read_long(DS1307_ADDR_MAXS0DAY);                    // read max S0-Count day
   if (l != 0xFFFFFFFF) {                                         // Prüfung ob gelöscht
     s0_count_max_day = l;                                       // bisheriges Maximum übernehmen
+#if defined DEBUG_OUTPUT_SERIAL_DS1307
     Serial.print(F("DS1307 S0-Counts max per day:   "));
     Serial.print(l);
     Serial.print(F(" - "));
     l = DS1307_read_long(DS1307_ADDR_MAXS0DAYTIME);             // read timestamp
     Serial.println(DateToString(l));
+#endif
   } else {
     s0_count_max_day = 0;
     DS1307_write_long(DS1307_ADDR_MAXS0DAY, 0);                 // Maximum pro Tag löschen
@@ -329,6 +362,7 @@ void ds1307_alldata_read() {                                        // read all 
   l = DS1307_read_long(DS1307_ADDR_MAXS0MONTH);                 // read max S0-Count month
   if (l != 0xFFFFFFFF) {                                         // Prüfung ob gelöscht
     s0_count_max_month = l;                                     // bisheriges Maximum übernehmen
+#if defined DEBUG_OUTPUT_SERIAL_DS1307
     Serial.print(F("DS1307 S0-Counts max per month: "));
     Serial.print(l);
     Serial.print(F(" - "));
@@ -336,6 +370,7 @@ void ds1307_alldata_read() {                                        // read all 
     Serial.print(month(l));
     Serial.print(F("/"));
     Serial.println(year(l));
+#endif
   } else {
     s0_count_max_month = 0;
     DS1307_write_long(DS1307_ADDR_MAXS0MONTH, 0);               // Maximum pro Monat löschen
@@ -345,11 +380,13 @@ void ds1307_alldata_read() {                                        // read all 
   l = DS1307_read_long(DS1307_ADDR_MAXS0YEAR);                  // read max S0-Count year
   if (l != 0xFFFFFFFF) {                                         // Prüfung ob gelöscht
     s0_count_max_year = l;                                      // bisheriges Maximum übernehmen
+#if defined DEBUG_OUTPUT_SERIAL_DS1307
     Serial.print(F("DS1307 S0-Counts max per year:  "));
     Serial.print(l);
     Serial.print(F(" - "));
     l = DS1307_read_long(DS1307_ADDR_MAXS0YEARTIME);            // read timestamp
     Serial.println(year(l));
+#endif
   } else {
     s0_count_max_year = 0;   // bisheriges Maximum löschen
     DS1307_write_long(DS1307_ADDR_MAXS0YEAR, 0);                // Maximum pro Jahr löschen
@@ -369,12 +406,12 @@ long EEPROM_read_long(int address) {
 //This function will write a 4 byte (32bit) long to the eeprom at
 //the specified address to address + 3.
 void EEPROM_write_long(int address, long value) {
-  if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-    Serial.print(F("EEPROM write long at address: "));
-    Serial.print(address);
-    Serial.print(F(" - "));
-    Serial.println(value);
-  }
+#ifdef DEBUG_OUTPUT_SERIAL_EEPROM
+  Serial.print(F("EEPROM write long at address: "));
+  Serial.print(address);
+  Serial.print(F(" - "));
+  Serial.println(value);
+#endif
   //Decomposition from a long to 4 bytes by using bitshift.
   //Byte1 = Most significant -> Byte4 = Least significant byte
   byte byte4 = (value & 0xFF);
@@ -397,12 +434,12 @@ int EEPROM_read_int(int address) {               // read Integer (2 Bytes) from 
 }
 
 void EEPROM_write_int(int address, int value) {   // write Integer (2 Bytes) to EEPROM
-  if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-    Serial.print(F("EEPROM write integer at address: "));
-    Serial.print(address);
-    Serial.print(F(" - "));
-    Serial.println(value);
-  }
+#ifdef DEBUG_OUTPUT_SERIAL_EEPROM
+  Serial.print(F("EEPROM write integer at address: "));
+  Serial.print(address);
+  Serial.print(F(" - "));
+  Serial.println(value);
+#endif
   EEPROM.write(address, lowByte(value));
   EEPROM.write(address + 1, highByte(value));
   EEPROM.commit();
@@ -410,24 +447,24 @@ void EEPROM_write_int(int address, int value) {   // write Integer (2 Bytes) to 
 
 //This function will write a byte to the eeprom at the specified address
 void EEPROM_write_byte(int address, byte value) {     // write byte at address
-  if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-    Serial.print(F("EEPROM write byte at address: "));
-    Serial.print(address);
-    Serial.print(F(" - "));
-    Serial.println(value);
-  }
+#ifdef DEBUG_OUTPUT_SERIAL_EEPROM
+  Serial.print(F("EEPROM write byte at address: "));
+  Serial.print(address);
+  Serial.print(F(" - "));
+  Serial.println(value);
+#endif
   EEPROM.write(address, value);
   EEPROM.commit();
 }
 
 //This function will write a boolean to the eeprom at the specified address
 void EEPROM_write_boolean(int address, boolean value) {     // write boolean at address
-  if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-    Serial.print(F("EEPROM write boolean at address: "));
-    Serial.print(address);
-    Serial.print(F(" - "));
-    Serial.println(value);
-  }
+#ifdef DEBUG_OUTPUT_SERIAL_EEPROM
+  Serial.print(F("EEPROM write boolean at address: "));
+  Serial.print(address);
+  Serial.print(F(" - "));
+  Serial.println(value);
+#endif
   EEPROM.write(address, value);
   EEPROM.commit();
 }
@@ -445,22 +482,22 @@ String EEPROM_read_string(int address) {                  // read String from EE
 }
 
 void EEPROM_write_string(int address, String str) {       // write String to EEPROM
-  if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-    Serial.print(F("EEPROM write string at address: "));
-    Serial.print(address);
-    Serial.print(F(" - "));
-  }
+#ifdef DEBUG_OUTPUT_SERIAL_EEPROM
+  Serial.print(F("EEPROM write string at address: "));
+  Serial.print(address);
+  Serial.print(F(" - "));
+#endif
   for (unsigned int i = 0; i < str.length(); ++i) {
     EEPROM.write(address + i, str[i]);
-    if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-      Serial.print(str[i]);
-    }
+#ifdef DEBUG_OUTPUT_SERIAL_EEPROM
+    Serial.print(str[i]);
+#endif
   }
   EEPROM.write(address + str.length(), 0);            // Stringende schreiben
   EEPROM.commit();
-  if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-    Serial.println();
-  }
+#ifdef DEBUG_OUTPUT_SERIAL_EEPROM
+  Serial.println();
+#endif
 }
 
 IPAddress EEPROM_read_ipaddress(int address) {   // read IP-Address from EEPROM
@@ -475,12 +512,12 @@ IPAddress EEPROM_read_ipaddress(int address) {   // read IP-Address from EEPROM
 //This function will write IPAddress (4 byte) to the eeprom at
 //the specified address to address + 3.
 void EEPROM_write_ipaddress(int address, IPAddress ip) {
-  if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-    Serial.print(F("EEPROM write IPAddress at address: "));
-    Serial.print(address);
-    Serial.print(F(" - "));
-    Serial.println(ip);
-  }
+#ifdef DEBUG_OUTPUT_SERIAL_EEPROM
+  Serial.print(F("EEPROM write IPAddress at address: "));
+  Serial.print(address);
+  Serial.print(F(" - "));
+  Serial.println(ip);
+#endif
   //Write the 4 bytes into the eeprom memory.
   EEPROM.write(address, ip[0]);
   EEPROM.write(address + 1, ip[1]);
@@ -491,6 +528,7 @@ void EEPROM_write_ipaddress(int address, IPAddress ip) {
 
 // Speicherbereich auslesen
 // gibt einen Dump des Speicherinhalts in tabellarischer Form über den seriellen Port aus.
+#ifdef DEBUG_OUTPUT_SERIAL_EEPROM
 void eeprom_read_table() {
   SerialPrintLine();            // Trennlinie seriell ausgeben
   Serial.println(F("EEPROM read all bytes"));
@@ -521,11 +559,12 @@ void eeprom_read_table() {
   }
   SerialPrintLine();            // Trennlinie seriell ausgeben
 }
+#endif
 
 bool handleFileRead(String path) {
-  if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-    Serial.println(F("handleFileRead: ") + path);
-  }
+#ifdef DEBUG_OUTPUT_SERIAL_LITTLEFS
+  Serial.println(F("handleFileRead: ") + path);
+#endif
   if (path.endsWith("/")) path += "index.htm";
   String contentType = getContentType(path);
   String pathWithGz = path + ".gz";
@@ -554,11 +593,11 @@ void rotateLog() {
   size_t logFileSize = logFile.size();                       // files size
   logFile.close();
   if (logFileSize > 8192) {
-    if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-      Serial.print(F("Size Logfile: "));
-      Serial.print(logFileSize);
-      Serial.print(F(" B"));
-    }
+#ifdef DEBUG_OUTPUT_SERIAL_LITTLEFS
+    Serial.print(F("Size Logfile: "));
+    Serial.print(logFileSize);
+    Serial.print(F(" B"));
+#endif
     //calculate lines
     logFile = LittleFS.open("/log/system.log", "r");            // Open for reading.
     int logFileLines = 0;
@@ -569,26 +608,26 @@ void rotateLog() {
     }
     logFile.close();
     int newLogFileLines = logFileLines - 10;
-    if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-      Serial.print(F("  Lines: "));
-      Serial.print(logFileLines);
-      Serial.print(F("  Start: "));
-      Serial.println(newLogFileLines);
-    }
+#ifdef DEBUG_OUTPUT_SERIAL_LITTLEFS
+    Serial.print(F("  Lines: "));
+    Serial.print(logFileLines);
+    Serial.print(F("  Start: "));
+    Serial.println(newLogFileLines);
+#endif
     // Create new File
     // this opens the file in read-mode
     File logFileNew = LittleFS.open("/lognew.txt", "r");
     if (!logFileNew) {
-      if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-        Serial.println(F("LittleFS new log file doesn't exist yet. Creating it"));
-      }
+#ifdef DEBUG_OUTPUT_SERIAL_LITTLEFS
+      Serial.println(F("LittleFS new log file doesn't exist yet. Creating it"));
+#endif
       // open the file in write mode
       File logFileNew = LittleFS.open("/lognew.txt", "w");     // Truncate file to zero length or create text file for writing.
-      if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-        if (!logFileNew) {
-          Serial.println(F("LittleFS new logfile creation failed"));
-        }
+#ifdef DEBUG_OUTPUT_SERIAL_LITTLEFS
+      if (!logFileNew) {
+        Serial.println(F("LittleFS new logfile creation failed"));
       }
+#endif
       // now write one line in key/value style with  end-of-line characters
       //logFileNew.println("---------- CREATE FILE ----------");
     }
@@ -622,3 +661,28 @@ int countLogLines(String FileName) {
   LogFile.close();
   return rows;
 }
+
+#ifdef DEBUG_OUTPUT_SERIAL_LITTLEFS
+void printDirectory(File dir, int numTabs) {
+  while (true) {
+    File entry = dir.openNextFile();
+    if (! entry) {
+      // no more files
+      break;
+    }
+    for (uint8_t i = 0; i < numTabs; i++) {
+      Serial.print('\t');
+    }
+    Serial.print(entry.name());
+    if (entry.isDirectory()) {
+      Serial.println("/");
+      printDirectory(entry, numTabs + 1);
+    } else {
+      // files have sizes, directories do not
+      Serial.print("\t\t");
+      Serial.println(entry.size(), DEC);
+    }
+    entry.close();
+  }
+}
+#endif

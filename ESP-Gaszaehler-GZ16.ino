@@ -1,6 +1,5 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
-#include <ESP8266mDNS.h>
 #include <ESP8266HTTPUpdateServer.h>
 #include <EEPROM.h>
 #include <LittleFS.h>
@@ -18,11 +17,19 @@ const float ADC_DIV = 190.0;        // Divisor für Batteriespannung bei HW-Vers
 #endif
 
 #define HOSTNAME                    "GZ16-ESP-" // Hostname, 3 Byte Chip-ID werden angehangen
-
 #define VERSION                     1
-#define BUILD                       96
-#define DEBUG_OUTPUT_SERIAL         false
-//#define DEBUG_OUTPUT_SERIAL        true
+#define BUILD                       97
+//#define DEBUG_OUTPUT_SERIAL
+//#define DEBUG_OUTPUT_SERIAL_DS1307
+//#define DEBUG_OUTPUT_SERIAL_EEPROM
+//#define DEBUG_OUTPUT_SERIAL_ESP8266
+//#define DEBUG_OUTPUT_SERIAL_MQTT
+//#define DEBUG_OUTPUT_SERIAL_LITTLEFS
+//#define DEBUG_OUTPUT_SERIAL_WIFI
+
+#ifdef DEBUG_OUTPUT_SERIAL_WIFI
+const char* strWifiStatus[8] PROGMEM = { "WL_IDLE_STATUS", "WL_NO_SSID_AVAIL", "unknown", "WL_CONNECTED", "WL_CONNECT_FAILED", "unknown", "WL_CONNECT_WRONG_PASSWORD", "WL_DISCONNECTED" };
+#endif
 
 // EEPROM Size
 #define EEPROM_MIN_ADDR             0
@@ -104,21 +111,21 @@ WiFiClient espClient;
 String essid = "";                        // Wifi SSID
 String epass = "";                        // Wifi Password
 //boolean edhcp = true;                     // IP-Adresse mittels DHCP
-byte edhcp = true;                     // IP-Adresse mittels DHCP
+byte edhcp = true;                        // IP-Adresse mittels DHCP
 IPAddress eip;                            // IP-Adresse static IP
 IPAddress esnm;                           // Subnetzmaske static
 IPAddress esgw;                           // Standard-Gateway static
 IPAddress edns;                           // Domain Name Server static
 boolean ConnectWifi = false;
 String OwnStationHostname = HOSTNAME;
-//String OwnStationHostname = F("GZ16-ESP-");
-unsigned int ulReconncount;              // Counter Reconnects
-// unsigned long ulReconncount;              // Counter Reconnects
+int reconnCount;                          // Counter Reconnects
+int reconnCountOld;                       // Counter Reconnects
 unsigned long ulWifiRxBytes;              // Count Received Bytes
 unsigned long ulWifiTxBytes;              // Count Transmitted Bytes
 byte webtype = 255;
 byte estart;                              // Start-Zähler für WPS, AP etc.
-int WifiNetworks;                         // Anzahl Wifi-Netzwerke
+bool wpsSuccess = false;
+int8_t WifiNetworks;                      // Anzahl Wifi-Netzwerke
 
 // MQTT
 PubSubClient client(espClient);
@@ -127,16 +134,11 @@ String eMqttUsername = "";                    // MQTT-Username
 String eMqttPassword = "";                    // MQTT-Password
 int eMqttPort = 0;                            // MQTT-Port
 byte eMqttPublish_Intervall = 3;              // MQTT publish intervall
-//boolean eMqttPublish_s0_count_abs = false;    // MQTT publish S0-Counter absolut
-byte eMqttPublish_s0_count_abs = false;    // MQTT publish S0-Counter absolut
-//boolean eMqttPublish_s0_count_mom = false;    // MQTT publish S0-Counter Moment
-byte eMqttPublish_s0_count_mom = false;    // MQTT publish S0-Counter Moment
-//boolean eMqttPublish_rssi = false;            // MQTT publish WLAN RSSI
-byte eMqttPublish_rssi = false;            // MQTT publish WLAN RSSI
-//boolean eMqttPublish_recon = false;           // MQTT publish WLAN reconnects
-byte eMqttPublish_recon = false;           // MQTT publish WLAN reconnects
-//boolean MqttConnect = false;                  // MQTT connect on/off
-byte MqttConnect = false;                  // MQTT connect on/off
+byte eMqttPublish_s0_count_abs = false;       // MQTT publish S0-Counter absolut
+byte eMqttPublish_s0_count_mom = false;       // MQTT publish S0-Counter Moment
+byte eMqttPublish_rssi = false;               // MQTT publish WLAN RSSI
+byte eMqttPublish_recon = false;              // MQTT publish WLAN reconnects
+byte MqttConnect = false;                     // MQTT connect on/off
 boolean sendMQTT = false;
 
 // Zeit
@@ -194,10 +196,10 @@ void IRAM_ATTR Interrupt_Button() {
     Button_Press_Time = 0;
     Button_Press_Count++;                 // increase button press count
     digitalWrite(LED_red, LOW) ;          // LED ein
-    if (SerialOutput == 1) {        // serielle Ausgabe eingeschaltet
-      Serial.print(F("Button pressed #"));
-      Serial.println(Button_Press_Count);
-    }
+#ifdef DEBUG_OUTPUT_SERIAL
+    Serial.print(F("Button pressed #"));
+    Serial.println(Button_Press_Count);
+#endif
   }
 }
 
@@ -245,9 +247,13 @@ void setup (void) {
 
   // start I2C
   Wire.begin(I2C_SDA_Pin, I2C_SCL_Pin);
+#if defined DEBUG_OUTPUT_SERIAL_DS1307
   SerialPrintLine();            // Trennlinie seriell ausgeben
+#endif
   if (! DS1307_isrunning()) {
+#if defined DEBUG_OUTPUT_SERIAL_DS1307
     Serial.println(F("RTC is NOT running! Please set date and time."));
+#endif
     digitalWrite(LED_red, LOW) ;     // LED ein
     DS1307_clear_ram();
     //Serial.println("Set date and time to compile time");
@@ -257,6 +263,7 @@ void setup (void) {
   } else {
     DS1307_getTime();                          // get date and time from DS1307
     lastSetTime = now();
+#if defined DEBUG_OUTPUT_SERIAL_DS1307
     Serial.println(F("RTC read date and time:"));
     Serial.print(F("Date: "));
     Serial.println(DateToString(now()));        // return Date String from Timestamp
@@ -264,38 +271,44 @@ void setup (void) {
     Serial.println(weekday());                  // Day of the week, Sunday is day 1
     Serial.print(F("Time: "));
     Serial.println(TimeToString(now()));        // return Time String from Timestamp
+#endif
   }
 
   // Initialize file system.
+#ifdef DEBUG_OUTPUT_SERIAL_LITTLEFS
   SerialPrintLine();            // Trennlinie seriell ausgeben
+#endif
   LittleFS.setTimeCallback(LittleFsTimeCallback); // for LittleFS filesystems file timestamp
   if (!LittleFS.begin()) {
     //filesystem = false;
+#ifdef DEBUG_OUTPUT_SERIAL_LITTLEFS
     Serial.println(F("LittleFS Failed to mount file system"));
+#endif
   } else {
     //filesystem = true;
     // always use this to "mount" the filesystem
     //bool result = LittleFS.begin();
+#ifdef DEBUG_OUTPUT_SERIAL_LITTLEFS
     Serial.println(F("LittleFS Filesystem mounted"));
+#endif
     File logFile = LittleFS.open("/log/system.log", "r");     //Open text file for reading.
     if (!logFile) {
+#ifdef DEBUG_OUTPUT_SERIAL_LITTLEFS
       Serial.println(F("LittleFS file /log/system.log doesn't exist yet. Creating it"));
+#endif
       File logFile = LittleFS.open("/log/system.log", "w");   // Truncate file to zero length or create text file for writing.
       if (!logFile) {
+#ifdef DEBUG_OUTPUT_SERIAL_LITTLEFS
         Serial.println(F("LittleFS file creation failed"));
+#endif
       } else {
         logFile.println(F("---------- CREATE LOG FILE ----------"));
       }
     }
     logFile.close();
-    String logText = F("GZ16 ESP8266 Restart (");
-    logText += ESP.getResetReason();
-    logText += F(")");
-    Serial.println(logText);
-    appendLogFile(logText);
   }
 
-  // Get ESP8266 infomation
+  // Get ESP8266 and FS infomation
   print_info();
 
   // disconnect wifi
@@ -305,6 +318,14 @@ void setup (void) {
   // start EEPROM
   EEPROM.begin(EEPROM_MAX_ADDR);                // max 4096 Bytes
   eeprom_alldata_read();                         // read all data from EEPROM
+
+  String logText = F("GZ16 ESP8266 Restart (");
+  logText += ESP.getResetReason();
+  logText += F(")");
+  if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
+    Serial.println(logText);
+  }
+  appendLogFile(logText);
 
   // Read S0-Data from LittleFS
   String FileName = (F("/log/d_"));                    // lese aktuellen Tag
@@ -319,14 +340,14 @@ void setup (void) {
   FileName += (year());
   FileName += (F(".log"));     // Dateiende ".log" anhängen
   s0_count_year = LittleFSReadS0Count(FileName, 3);
-  SerialPrintLine();            // Trennlinie seriell ausgeben
 
   // Read S0-Data from DS1307
   ds1307_alldata_read();                         // read all data from DS1307 RAM
-  SerialPrintLine();            // Trennlinie seriell ausgeben
   s0_count_day += s0_count_hour;
   s0_count_month += s0_count_day;
   s0_count_year += s0_count_month;
+#if defined DEBUG_OUTPUT_SERIAL_DS1307
+  SerialPrintLine();            // Trennlinie seriell ausgeben
   Serial.print(F("S0-Pulse hour count:     "));
   Serial.println(s0_count_hour);
   Serial.print(F("S0-Pulse day count:      "));
@@ -337,31 +358,40 @@ void setup (void) {
   Serial.println(s0_count_year);
   Serial.print(F("S0-Pulse absolut count:  "));
   Serial.println(s0_count_abs);
+#endif
 
   // Hostnamen bilden
   char buf[10];
+#if defined DEBUG_OUTPUT_SERIAL_WIFI
   SerialPrintLine();            // Trennlinie seriell ausgeben
+#endif
   sprintf(buf, "%06X", ESP.getChipId());
   OwnStationHostname += buf;
   OwnStationHostname.replace("_", "-");       // Unterstrich ersetzen, nicht zulässig im Hostnamen
+  WiFi.hostname(OwnStationHostname);
+#ifdef DEBUG_OUTPUT_SERIAL_WIFI
   Serial.print(F("Hostname: "));
   Serial.println(OwnStationHostname);
-  WiFi.hostname(OwnStationHostname);
+#endif
 
-  if (estart > 3) {                                         // max. 3 Versuche WPS
+  if (estart > 3) {                                         // max. 4 Versuche WPS
     // 3 x Fehler WPS - starte Accesspoint
     setupAP();                                              // Accesspoint starten
   } else {
     if ((essid.length() != 0) && (epass.length() != 0)) {   // SSID und Passwort im EEPROM
       startStation();                                     //connect to Wifi in Station Mode
     } else {                                      // keine SSID und keine Passwort im EEPROM
-      Serial.println(F("No SSID and Password in EEPROM"));
+#ifdef DEBUG_OUTPUT_SERIAL_WIFI
+      Serial.println(F("No SSID or Password in EEPROM"));
+#endif
       // starte WiFi Protected Setup (WPS)
       if (!start_WPS_connect()) {                         // Wifi WPS Connection failed
         estart += 1;                                       // Start-Zähler erhöhen
-        String logText = F("Wifi WPS connection failed #");
+        logText = F("Wifi WPS connection failed #");
         logText += estart;
+#ifdef DEBUG_OUTPUT_SERIAL_WIFI
         Serial.println(logText);
+#endif
         appendLogFile(logText);
         EEPROM_write_byte(EEPROM_ADDR_START, estart);      // write Start Count to EEPROM
         delay(1000);
@@ -413,33 +443,62 @@ void loop ( void ) {
   // Perform regular checks, 1 time/sec
   if (second() != sec_old) {
     sec_old = second();
+    if (sec_old % 5 == 0) {
+      // print RAM-Info, see https://arduino-esp8266.readthedocs.io/en/latest/libraries.html#esp-specific-apis
+//      Serial.print(F("ESP8266 FreeHeap:          "));
+//      Serial.println(ESP.getFreeHeap());         // free heap size.
+//      Serial.print(F("ESP8266 MaxFreeBlockSize:  "));
+//      Serial.println(ESP.getMaxFreeBlockSize()); // largest contiguous free RAM block in the heap, useful for checking heap fragmentation. NOTE: Maximum malloc() -able block will be smaller due to memory manager overheads.
+//      Serial.print(F("ESP8266 HeapFragmentation: "));
+//      Serial.println(ESP.getHeapFragmentation()); // fragmentation metric (0% is clean, more than ~50% is not harmless)
+      // END print RAM-Info
+    }
     if (Button_Press_Count > 0) {
       Button_Press_Time++;                            // increase timer
       digitalWrite(LED_red, !digitalRead(LED_red));   // LED toggle
       if (Button_Press_Time > 5) {
+        String logText = F("Button pressed ");
+        logText += Button_Press_Count;
+        logText += F(" times, ");
         switch (Button_Press_Count) {
           case 3:   // Taster 3x betätigt - WPS starten
+            estart = 0;                                 // Zähler zurück setzen
+            EEPROM_write_byte(EEPROM_ADDR_START, estart);      // write Start Count to EEPROM
+            logText += F("Wifi WPS start.");
+            appendLogFile(logText);
+#ifdef DEBUG_OUTPUT_SERIAL_WIFI
+            Serial.println(logText);
+#endif
             // starte WiFi Protected Setup (WPS)
             if (!start_WPS_connect()) {               // Wifi WPS Connection failed
-              String logText = F("Wifi WPS connection failed #");
+              logText = F("Wifi WPS connection failed #");
               logText += estart;
               appendLogFile(logText);
-              if (SerialOutput == 1) {                // serielle Ausgabe eingeschaltet
-                Serial.println(logText);
-              }
+#ifdef DEBUG_OUTPUT_SERIAL_WIFI
+              Serial.println(logText);
+#endif
               delay(1000);
               /* After programming your ESP, the ESP.restart(); does not always work.
-                 You have to reset it manually, after programming. Because after it reliable Works
-              */
+                 You have to reset it manually, after programming. Because after it reliable Works */
               ESP.restart();
             }
             break;
           case 4:   // Taster 4x betätigt - Accesspoint starten
+            logText += F("Wifi AP start.");
+            appendLogFile(logText);
+#ifdef DEBUG_OUTPUT_SERIAL_WIFI
+            Serial.println(logText);
+#endif
             WiFi.disconnect();                // disconnect wifi
             delay(100);
             setupAP();                        // Accesspoint starten
             break;
           case 5:   // Taster 5x betätigt - GZ16 neu starten
+            logText += F("GZ16 restart.");
+            appendLogFile(logText);
+#ifdef DEBUG_OUTPUT_SERIAL_WIFI
+            Serial.println(logText);
+#endif
             WiFi.disconnect();                // disconnect wifi
             delay(100);
             ESP.restart();
@@ -460,30 +519,62 @@ void loop ( void ) {
           ConnectWifi = false;                      // nur einmal ausführen
           String logtext = F("Wifi connection lost");
           appendLogFile(logtext);
-          if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-            Serial.println(logtext);
-          }
-          WiFi.begin(essid.c_str(), epass.c_str());
+#ifdef DEBUG_OUTPUT_SERIAL_WIFI
+          Serial.println(logtext);
+#endif
+          connectWifiBestRssi(); // connect to AP with best RSSI
+          // WiFi.begin(essid.c_str(), epass.c_str());
         }
-        if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-          Serial.print(F("Wifi-Status: "));
-          Serial.println(WiFi.status());
-        }
+#ifdef DEBUG_OUTPUT_SERIAL_WIFI
+        Serial.print(F("WiFi-Status: ")); Serial.print(WiFi.status()); Serial.print(F(" ("));  Serial.print(strWifiStatus[WiFi.status()]); Serial.println(')'); // 3 = connected
+#endif
       } else {                                    // Wifi connected
+        if (wpsSuccess == true) {
+          String qssid = WiFi.SSID();
+          String qpass = WiFi.psk(); // ist hier leer! Nach Neustart allerdings da!
+          if ((qssid.length() > 0) && (qpass.length() > 0)) {
+            wpsSuccess = false;                   // nur einmal ausführen
+            essid = qssid;                                // SSID übernehmen
+            epass = qpass;                                // Wifi Passwort übernehmen
+            String logText = F("Wifi WPS connected to: ");
+            logText += essid;
+            appendLogFile(logText);
+#ifdef DEBUG_OUTPUT_SERIAL_WIFI
+            Serial.println(logText);
+#endif
+            EEPROM_write_string(EEPROM_ADDR_SSID, essid);   // write String to EEPROM
+            EEPROM_write_string(EEPROM_ADDR_PASS, epass);   // write String to EEPROM
+            appendLogFile(F("Wifi settings saved"));
+#ifdef DEBUG_OUTPUT_SERIAL_WIFI
+            Serial.print(F("Uptime seconds: "));
+            Serial.println(uptime);
+            Serial.print(F("WPS connected to: "));
+            Serial.println(essid);
+            Serial.print(F("WPS with password: "));
+            Serial.println(epass);
+#endif
+          } else {
+#ifdef DEBUG_OUTPUT_SERIAL_WIFI
+            Serial.print(F("Uptime seconds: "));
+            Serial.println(uptime);
+            Serial.println(F("WPS SSID or password empty!"));
+#endif
+          }
+        }
         if (ConnectWifi == false) {               // nur einmal ausführen
           ConnectWifi = true;                     // nur einmal ausführen
           digitalWrite(LED_green, LOW) ;          // LED ein
-          ulReconncount += 1;                     // Counter Reconnects erhöhen
+          reconnCount += 1;                       // Counter Reconnects erhöhen
           String logtext = F("Wifi connected to ");
           logtext += WiFi.SSID();
           logtext += F(", channel ");
           logtext += WiFi.channel();
           appendLogFile(logtext);
-          if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-            Serial.println(logtext);
-            Serial.print(F("Local IP: "));
-            Serial.println(WiFi.localIP());
-          }
+#ifdef DEBUG_OUTPUT_SERIAL_WIFI
+          Serial.println(logtext);
+          Serial.print(F("Local IP: "));
+          Serial.println(WiFi.localIP());
+#endif
         }
         if (ntpServerNr != 3) {                   // NTP eingeschaltet
           ntpSyncSecCount += 1;                   // Zähler erhöhen
@@ -510,65 +601,65 @@ void loop ( void ) {
               logtext += (eMqttBroker);
               logtext += F(" connected");
               appendLogFile(logtext);
-              if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-                Serial.println(logtext);
-              }
+#ifdef DEBUG_OUTPUT_SERIAL_MQTT
+              Serial.println(logtext);
+#endif
               client.publish(OwnStationHostname.c_str(), "Connected");
               digitalWrite(LED_red, HIGH) ;                     // LED aus
             } else {                                            // MQTT Broker disconnected
-              if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-                Serial.print(F("MQTT connect to "));
-                Serial.print(eMqttBroker);
-                Serial.print(F(" failed, state="));
-                Serial.println(client.state());
-                /* Possible values for client.state()
-                  #define MQTT_CONNECTION_TIMEOUT     -4
-                  #define MQTT_CONNECTION_LOST        -3
-                  #define MQTT_CONNECT_FAILED         -2
-                  #define MQTT_DISCONNECTED           -1
-                  #define MQTT_CONNECTED               0
-                  #define MQTT_CONNECT_BAD_PROTOCOL    1
-                  #define MQTT_CONNECT_BAD_CLIENT_ID   2
-                  #define MQTT_CONNECT_UNAVAILABLE     3
-                  #define MQTT_CONNECT_BAD_CREDENTIALS 4
-                  #define MQTT_CONNECT_UNAUTHORIZED    5
-                */
-                switch (client.state()) {
-                  case -4:
-                    Serial.println(F("MQTT_CONNECTION_TIMEOUT"));
-                    break;
-                  case -3:
-                    Serial.println(F("MQTT_CONNECTION_LOST"));
-                    break;
-                  case -2:
-                    Serial.println(F("MQTT_CONNECTION_FAILED"));
-                    break;
-                  case -1:
-                    Serial.println(F("MQTT_DISCONNECTED"));
-                    break;
-                  case 0:
-                    Serial.println(F("MQTT_CONNECTED"));
-                    break;
-                  case 1:
-                    Serial.println(F("MQTT_CONNECT_BAD_PROTOCOL"));
-                    break;
-                  case 2:
-                    Serial.println(F("MQTT_CONNECT_BAD_CLIENT_ID"));
-                    break;
-                  case 3:
-                    Serial.println(F("MQTT_CONNECT_UNAVAILABLE"));
-                    break;
-                  case 4:
-                    Serial.println(F("MQTT_CONNECT_BAD_CREDENTIALS"));
-                    break;
-                  case 5:
-                    Serial.println(F("MQTT_CONNECT_UNAUTHORIZED"));
-                    break;
-                  default:
-                    Serial.println(F("MQTT UNKNOWN ERROR"));
-                    break;
-                }
+#ifdef DEBUG_OUTPUT_SERIAL_MQTT
+              Serial.print(F("MQTT connect to "));
+              Serial.print(eMqttBroker);
+              Serial.print(F(" failed, state="));
+              Serial.println(client.state());
+              /* Possible values for client.state()
+                #define MQTT_CONNECTION_TIMEOUT     -4
+                #define MQTT_CONNECTION_LOST        -3
+                #define MQTT_CONNECT_FAILED         -2
+                #define MQTT_DISCONNECTED           -1
+                #define MQTT_CONNECTED               0
+                #define MQTT_CONNECT_BAD_PROTOCOL    1
+                #define MQTT_CONNECT_BAD_CLIENT_ID   2
+                #define MQTT_CONNECT_UNAVAILABLE     3
+                #define MQTT_CONNECT_BAD_CREDENTIALS 4
+                #define MQTT_CONNECT_UNAUTHORIZED    5
+              */
+              switch (client.state()) {
+                case -4:
+                  Serial.println(F("MQTT_CONNECTION_TIMEOUT"));
+                  break;
+                case -3:
+                  Serial.println(F("MQTT_CONNECTION_LOST"));
+                  break;
+                case -2:
+                  Serial.println(F("MQTT_CONNECTION_FAILED"));
+                  break;
+                case -1:
+                  Serial.println(F("MQTT_DISCONNECTED"));
+                  break;
+                case 0:
+                  Serial.println(F("MQTT_CONNECTED"));
+                  break;
+                case 1:
+                  Serial.println(F("MQTT_CONNECT_BAD_PROTOCOL"));
+                  break;
+                case 2:
+                  Serial.println(F("MQTT_CONNECT_BAD_CLIENT_ID"));
+                  break;
+                case 3:
+                  Serial.println(F("MQTT_CONNECT_UNAVAILABLE"));
+                  break;
+                case 4:
+                  Serial.println(F("MQTT_CONNECT_BAD_CREDENTIALS"));
+                  break;
+                case 5:
+                  Serial.println(F("MQTT_CONNECT_UNAUTHORIZED"));
+                  break;
+                default:
+                  Serial.println(F("MQTT UNKNOWN ERROR"));
+                  break;
               }
+#endif
             }
           }
         }
@@ -612,8 +703,8 @@ void loop ( void ) {
     //    }
 
     if (second() >= 40) {
-      if ((minute() + 1) % eMqttPublish_Intervall == 0) {      // MQTT publish interval
-        if (MqttConnect == true) {                        // MQTT eingeschaltet
+      if ((minute() + 1) % eMqttPublish_Intervall == 0) {   // MQTT publish interval
+        if (MqttConnect == true) {                          // MQTT eingeschaltet
           if (sendMQTT == true) {
             sendMQTT = false;                               // nur einmal ausführen
             if (client.state() == 0) {                      // MQTT_CONNECTED - the client is connected
@@ -624,40 +715,43 @@ void loop ( void ) {
                 fl = s0_count_abs / 100.0;                  // Zählerstand absolut
                 dtostrf(fl, 4, 2, payload);     //4 is mininum width, 2 is precision; float value is copied onto buff
                 topic = OwnStationHostname + "/CountAbs";
-                if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-                  Serial.print(F("MQTT publish absolute Counter: "));
-                  Serial.println(payload);
-                }
+#ifdef DEBUG_OUTPUT_SERIAL_MQTT
+                Serial.print(F("MQTT publish absolute Counter: "));
+                Serial.println(payload);
+#endif
                 client.publish(topic.c_str(), payload);
               }
               if (eMqttPublish_s0_count_mom == true) {
                 fl = s0_count_mqtt / 100.0;                  // Zählerstand momentan MQTT
                 dtostrf(fl, 4, 2, payload);     //4 is mininum width, 2 is precision; float value is copied onto buff
                 topic = OwnStationHostname + "/CountMom";
-                if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-                  Serial.print(F("MQTT publish momentan Counter: "));
-                  Serial.println(payload);
-                }
+#ifdef DEBUG_OUTPUT_SERIAL_MQTT
+                Serial.print(F("MQTT publish momentan Counter: "));
+                Serial.println(payload);
+#endif
                 client.publish(topic.c_str(), payload);
                 s0_count_mqtt = 0;                           // reset S0-Counter Moment
               }
               if (eMqttPublish_rssi == true) {
                 topic = OwnStationHostname + "/RSSI";
                 sprintf(payload, "%d", WiFi.RSSI());          // RSSI
-                if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-                  Serial.print(F("MQTT publish RSSI: "));
-                  Serial.println(payload);
-                }
+#ifdef DEBUG_OUTPUT_SERIAL_MQTT
+                Serial.print(F("MQTT publish RSSI: "));
+                Serial.println(payload);
+#endif
                 client.publish(topic.c_str(), payload);
               }
-              if (eMqttPublish_recon == true) {
-                topic = OwnStationHostname + "/WiFiReconnects";
-                sprintf(payload, "%d", ulReconncount);          // RSSI
-                if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
+              if (reconnCount != reconnCountOld) {
+                if (eMqttPublish_recon == true) {
+                  topic = OwnStationHostname + "/WiFiReconnects";
+                  sprintf(payload, "%d", reconnCount);          // Counter WiFi Reconnects
+#ifdef DEBUG_OUTPUT_SERIAL_MQTT
                   Serial.print(F("MQTT publish WiFi Reconnects: "));
-                  Serial.println(ulReconncount);
+                  Serial.println(reconnCount);
+#endif
+                  client.publish(topic.c_str(), payload);
+                  reconnCountOld = reconnCount; // nur einmal ausführen
                 }
-                client.publish(topic.c_str(), payload);
               }
             }
           }
@@ -676,31 +770,25 @@ void loop ( void ) {
           saveLogYear = false;      // nur einmal ausführen
           // Werte jeden letzten Tag des Monats in jährliche Dateien schreiben (12 Zeilen pro Datei)
           if (day() == LastDayOfMonth(month(), year())) {     //letzter Tag im Monat
-#if DEBUG_OUTPUT_SERIAL == true
-            unsigned long startOperation = millis();   // benötigte Rechenzeit für Operation ermitteln (vor Beginn einfügen)
+#ifdef DEBUG_OUTPUT_SERIAL_LITTLEFS
+            Serial.print(F("S0-Pulse count last month: "));
+            Serial.print(TimeToString(now()));                // return Time String from Timestamp
+            Serial.print(F(" : "));
+            Serial.println(s0_count_month);
 #endif
-            if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-              Serial.print(F("S0-Pulse count last month: "));
-              Serial.print(TimeToString(now()));                // return Time String from Timestamp
-              Serial.print(F(" : "));
-              Serial.println(s0_count_month);
-            }
             String FileName = (F("/log/y_"));
             FileName += (year());
             FileName += (F(".log"));
             LittleFSWriteS0Count(FileName, s0_count_month);     // monatliche Werte in Jahresdatei schreiben
             s0_count_month = 0;                               // reset S0-Counter month
-            if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-              Serial.print(F("Days of Month: "));
-              Serial.println(LastDayOfMonth(month(), year()));
-            }
+#ifdef DEBUG_OUTPUT_SERIAL_LITTLEFS
+            Serial.print(F("Days of Month: "));
+            Serial.println(LastDayOfMonth(month(), year()));
+#endif
             //letzter Tag im Jahr
             if (month() == 12) {
               s0_count_year = 0;                              // reset S0-Counter year
             }
-#if DEBUG_OUTPUT_SERIAL == true
-            TimeOfOperation(startOperation);   // benötigte Rechenzeit für Operation (nach Ende einfügen)
-#endif
           }
         }
 
@@ -708,46 +796,41 @@ void loop ( void ) {
         if (second() >= 50 && saveLogMonth == true) {
           saveLogMonth = false;      // nur einmal ausführen
           // Werte jeden Tag in monatliche Dateien schreiben (max 31 Zeilen pro Datei)
-#if DEBUG_OUTPUT_SERIAL == true
-          unsigned long startOperation = millis();   // benötigte Rechenzeit für Operation ermitteln (vor Beginn einfügen)
+#ifdef DEBUG_OUTPUT_SERIAL_LITTLEFS
+          Serial.print(F("S0-Pulse count last day: "));
+          Serial.print(TimeToString(now()));         // return Time String from Timestamp
+          Serial.print(F(" : "));
+          Serial.println(s0_count_day);
 #endif
-          if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-            Serial.print(F("S0-Pulse count last day: "));
-            Serial.print(TimeToString(now()));         // return Time String from Timestamp
-            Serial.print(F(" : "));
-            Serial.println(s0_count_day);
-          }
           String FileName = ("/log/m_");
           FileName += (month());
           FileName += (F(".log"));
           // prüfe Logdatei und lösche sie, wenn Monat nicht mit aktuellem übereinstimmt
           if (LittleFS.exists(FileName)) {                    // Returns true if a file with given path exists, false otherwise.
-            if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-              Serial.print(F("LittleFS Reading Data from: "));
-              Serial.println(FileName);
-            }
+#ifdef DEBUG_OUTPUT_SERIAL_LITTLEFS
+            Serial.print(F("LittleFS Reading Data from: "));
+            Serial.println(FileName);
+#endif
             File LogFile = LittleFS.open(FileName, "r");      // Open text file for reading.
             String Datum = LogFile.readStringUntil(' ');    // Lets read string from the file
             LogFile.close();
             Datum.remove(0, 3); // Remove 3 characters starting at index=0
-            if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-              Serial.print(Datum);
-              Serial.println(F("<-- Monat und Jahr aus Datei"));
-            }
+#ifdef DEBUG_OUTPUT_SERIAL_LITTLEFS
+            Serial.print(Datum);
+            Serial.println(F("<-- Monat und Jahr aus Datei"));
+#endif
             String DatumNow(DateToString(now()));
             DatumNow.remove(0, 3); // Remove 3 characters starting at index=0
-            if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-              Serial.print(DatumNow);
-              Serial.println(F("<-- Monat und Jahr heute"));
-            }
+#ifdef DEBUG_OUTPUT_SERIAL_LITTLEFS
+            Serial.print(DatumNow);
+            Serial.println(F("<-- Monat und Jahr heute"));
+#endif
             if (Datum != DatumNow) {
+#ifdef DEBUG_OUTPUT_SERIAL_LITTLEFS
               String logtext = F("LittleFS Delete old log: ");
               logtext += (FileName);
-              if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-                Serial.println(F("Monat und Jahr nicht identisch"));
-                Serial.println(logtext);
-              }
-#if DEBUG_OUTPUT_SERIAL == true
+              Serial.println(F("Monat und Jahr nicht identisch"));
+              Serial.println(logtext);
               appendLogFile(logtext);
 #endif
               LittleFS.remove(FileName);  // Deletes the file given its absolute path. Returns true if file was deleted successfully.
@@ -755,9 +838,6 @@ void loop ( void ) {
           }
           LittleFSWriteS0Count(FileName, s0_count_day);   // tägliche Werte in Monatsdatei schreiben
           s0_count_day = 0;                                   // reset S0-Counter day
-#if DEBUG_OUTPUT_SERIAL == true
-          TimeOfOperation(startOperation);   // benötigte Rechenzeit für Operation (nach Ende einfügen)
-#endif
         }
       }
 
@@ -765,41 +845,36 @@ void loop ( void ) {
       if (second() >= 55 && saveLogDayBool == true) {
         saveLogDayBool = false;      // nur einmal ausführen
         // Werte jede Stunde in tägliche Dateien schreiben (24 Zeilen pro Datei)
-#if DEBUG_OUTPUT_SERIAL == true
-        unsigned long startOperation = millis();   // benötigte Rechenzeit für Operation ermitteln (vor Beginn einfügen)
+#ifdef DEBUG_OUTPUT_SERIAL_LITTLEFS
+        Serial.print(F("S0-Pulse count last hour: "));
+        Serial.print(TimeToString(now()));         // return Time String from Timestamp
+        Serial.print(F(" : "));
+        Serial.println(s0_count_hour);
 #endif
-        if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-          Serial.print(F("S0-Pulse count last hour: "));
-          Serial.print(TimeToString(now()));         // return Time String from Timestamp
-          Serial.print(F(" : "));
-          Serial.println(s0_count_hour);
-        }
         String FileName = (F("/log/d_"));
         FileName += (day());
         FileName += (F(".log"));
         // prüfe Logdatei und lösche sie, wenn Datum nicht mit aktuellem übereinstimmt
         if (LittleFS.exists(FileName)) {                    // Returns true if a file with given path exists, false otherwise.
-          if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-            Serial.print(F("LittleFS Reading Data from: "));
-            Serial.println(FileName);
-          }
+#ifdef DEBUG_OUTPUT_SERIAL_LITTLEFS
+          Serial.print(F("LittleFS Reading Data from: "));
+          Serial.println(FileName);
+#endif
           File LogFile = LittleFS.open(FileName, "r");      // Open text file for reading.
           String Datum = LogFile.readStringUntil(' ');    // Lets read string from the file
           LogFile.close();
-#if DEBUG_OUTPUT_SERIAL == true
+#ifdef DEBUG_OUTPUT_SERIAL_LITTLEFS
           Serial.print(Datum);
           Serial.println(F("<-- Datum aus Datei"));
           Serial.print(DateToString(now()));
           Serial.println(F("<-- Datum heute"));
 #endif
           if (Datum != DateToString(now())) {
+#ifdef DEBUG_OUTPUT_SERIAL_LITTLEFS
             String logtext = F("LittleFS Delete old log: ");
             logtext += (FileName);
-            if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-              Serial.println(F("Datum nicht identisch"));
-              Serial.println(logtext);
-            }
-#if DEBUG_OUTPUT_SERIAL == true
+            Serial.println(F("Datum nicht identisch"));
+            Serial.println(logtext);
             appendLogFile(logtext);
 #endif
             LittleFS.remove(FileName);  // Deletes the file given its absolute path. Returns true if file was deleted successfully.
@@ -822,9 +897,6 @@ void loop ( void ) {
           }
           numberLogLinesDay = 24;
         }
-#if DEBUG_OUTPUT_SERIAL == true
-        TimeOfOperation(startOperation);   // benötigte Rechenzeit für Operation (nach Ende einfügen)
-#endif
       }
     } else {
       saveLogYear = true;

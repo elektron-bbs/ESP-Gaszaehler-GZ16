@@ -15,7 +15,7 @@ Stromlaufpläne und Dokumentationen dazu befinden sich im Ordner /data/pdf
 ## Installation
 
 Das Kompilieren und Flashen der Firmware erfolgt in der Arduino-IDE nachdem die Sourcen für den ESP82666 eingebunden wurden.
-Als Board wird "NodeMCU 1.0 (ESP-12E Module) und Flash-Size "4M (3M SPIFFS)" ausgewählt. Im Ordner /data befinden sich Dokumentationen, Pläne und statische HTML-Seiten der Weboberfläche des GZ16. Diese müssen mittels "ESP8266 Sketch Data Upload" auf den ESP8266 hochgeladen werden.
+Als Board wird "NodeMCU 1.0 (ESP-12E Module) und Flash-Size "4MB (FS:3MB OTA:~512KB)" ausgewählt. Im Ordner /data befinden sich Dokumentationen, Pläne und statische HTML-Seiten der Weboberfläche des GZ16. Diese müssen mittels "ESP8266 Sketch Data Upload" auf den ESP8266 hochgeladen werden.
 
 ## Setup
 

@@ -1,14 +1,8 @@
 // warning: comparison is always true due to limited range of data type [-Wtype-limits] 12 |   if ((monat >= 0 && monat <= 2) || monat >= 12) {
 //String WebsiteStatistikJahreszeiten(String str, byte monat, long s0_count_ges_int, int tage, String ye) {
-String WebsiteStatistikJahreszeiten(String str, int monat, long s0_count_ges_int, int tage, String ye) {
-  if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-    Serial.print(F("S0-Count Jahreszeit "));
-    Serial.print(monat);
-    Serial.print(F(": "));
-    Serial.print(s0_count_ges_int);
-    Serial.print(F(" Tage: "));
-    Serial.println(tage);
-  }
+//String WebsiteStatistikJahreszeiten(String str, int monat, long s0_count_ges_int, int tage, String ye) {
+//String WebsiteStatistikJahreszeiten(String str, int monat, String ye) {
+String WebsiteStatistikJahreszeiten(String str, int monat, int ye) {
   str += F("<tr><td class=\"rx\" colspan=\"1\">");
   // Jahreszeit und Zeitraum einfügen
   if ((monat >= 0 && monat <= 2) || monat >= 12) {
@@ -116,22 +110,19 @@ boolean str2ip(char *string, byte* IP)
 // Find flash chip from http://code.coreboot.org/svn/flashrom/trunk/flashchips.h
 
 void print_info() {
+#ifdef DEBUG_OUTPUT_SERIAL_ESP8266
   SerialPrintLine();            // Trennlinie seriell ausgeben
   Serial.println(F("Hardware-Info ESP8266:"));
-
   //ESP.getChipId() returns the ESP8266 chip ID as a 32-bit integer.
   Serial.print(F("ESP8266 Chip ID: "));
   Serial.println(ESP.getChipId(), HEX);
-
   //ESP.getFlashChipId() returns the flash chip ID as a 32-bit integer.
   Serial.print(F("Flash Chip ID: "));
   Serial.println(ESP.getFlashChipId(), HEX);
-
   //ESP.getFlashChipSize() returns the flash chip size, in bytes, as seen by the SDK (may be less than actual size).
   Serial.print(F("Flash Chip SDK Size: "));
   uint32_t ideSize = ESP.getFlashChipSize();
   Serial.println(formatBytes(ideSize).c_str());
-
   //ESP.getFlashChipRealSize() returns the flash chip size, in bytes, as seen than actual size).
   Serial.print(F("Flash Chip Real Size: "));
   uint32_t realSize = ESP.getFlashChipRealSize();
@@ -141,14 +132,11 @@ void print_info() {
   } else {
     Serial.println(F("Flash Chip configuration ok."));
   }
-
   //ESP.getFlashChipSpeed(void) returns the flash chip frequency, in Hz.
   Serial.print(F("Flash Chip Speed: "));
   Serial.println(formatHertz(ESP.getFlashChipSpeed()).c_str());
-
   FlashMode_t ideMode = ESP.getFlashChipMode();
   Serial.printf("Flash ide mode: %s\r\n", (ideMode == FM_QIO ? "QIO" : ideMode == FM_QOUT ? "QOUT" : ideMode == FM_DIO ? "DIO" : ideMode == FM_DOUT ? "DOUT" : "UNKNOWN"));
-
   //ESP.getCycleCount() returns the cpu instruction cycle count since start as an unsigned 32-bit.
   //This is useful for accurate timing of very short actions like bit banging.
   Serial.print(F("Cycle Count: "));
@@ -181,19 +169,18 @@ void print_info() {
   // Retrieve the string representation of the SDK being used.
   Serial.print(F("SDK version: "));
   Serial.println(ESP.getSdkVersion());
-
   //ESP.getSketchSize(void) returns the Size of Sketch
   Serial.print(F("Sketch size: "));
   Serial.println(formatBytes(ESP.getSketchSize()).c_str());
-
   //ESP.getFreeSketchSpace(void) returns the free Size for Sketch
   Serial.print(F("Sketch Free size: "));
   Serial.println(formatBytes(ESP.getFreeSketchSpace()).c_str());
-
   // ESP.getFreeHeap() returns the free heap size.
   Serial.print(F("Free Heap: "));
   Serial.println(formatBytes(ESP.getFreeHeap()).c_str());
+#endif
 
+#ifdef DEBUG_OUTPUT_SERIAL_LITTLEFS
   SerialPrintLine();            // Trennlinie seriell ausgeben
   Serial.println(F("Filesystem ESP8266:"));
 
@@ -201,19 +188,31 @@ void print_info() {
   FSInfo fs_info;
   LittleFS.info(fs_info);
   Serial.print(F("LittleFS total size: "));
-  Serial.println(formatBytes(fs_info.totalBytes));
+  Serial.print(formatBytes(fs_info.totalBytes));
+  Serial.print(F(" ("));
+  Serial.print(fs_info.totalBytes);
+  Serial.println(F(" Bytes)"));
+  
   Serial.print(F("LittleFS used bytes: "));
-  Serial.println(formatBytes(fs_info.usedBytes));
-  Serial.print(F("LittleFS block size: "));
-  Serial.println(formatBytes(fs_info.blockSize));
-  Serial.print(F("LittleFS page size: "));
-  Serial.println(formatBytes(fs_info.pageSize));
+  Serial.print(formatBytes(fs_info.usedBytes));
+  Serial.print(F(" ("));
+  Serial.print(fs_info.usedBytes);
+  Serial.println(F(" Bytes)"));
 
-  // Dateien anzeigen
-  Dir dir = LittleFS.openDir("/");
-  while (dir.next()) {
-    String fileName = dir.fileName();
-    size_t fileSize = dir.fileSize();
-    Serial.printf("LittleFS File: %s, size: %s\r\n", fileName.c_str(), formatBytes(fileSize).c_str());
-  }
+  Serial.print(F("LittleFS block size: "));
+  Serial.print(formatBytes(fs_info.blockSize));
+  Serial.print(F(" ("));
+  Serial.print(fs_info.blockSize);
+  Serial.println(F(" Bytes)"));
+  
+  Serial.print(F("LittleFS page size: "));
+  Serial.print(formatBytes(fs_info.pageSize));
+  Serial.print(F(" ("));
+  Serial.print(fs_info.pageSize);
+  Serial.println(F(" Bytes)"));
+
+  Serial.println(F("Filelist:"));
+  File dir = LittleFS.open("/", "r"); // Open dir folder
+  printDirectory(dir, 0); // Cycle all the content
+#endif
 }
