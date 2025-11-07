@@ -74,6 +74,32 @@
   If you know all this and you knew how to do it, then you should have told me ...
 
   ---------------------------------------------------------------------------------------------------------------------
+  2025-11-07 - ESP_Gaszaehler_V1_98_Core312_DST
+. Variables and constants in RAM (global, static), used 37368 / 80192 bytes (46%)
+║   SEGMENT  BYTES    DESCRIPTION
+╠══ DATA     1552     initialized variables
+╠══ RODATA   4168     constants       
+╚══ BSS      31648    zeroed variables
+. Instruction RAM (IRAM_ATTR, ICACHE_RAM_ATTR), used 61863 / 65536 bytes (94%)
+║   SEGMENT  BYTES    DESCRIPTION
+╠══ ICACHE   32768    reserved space for flash instruction cache
+╚══ IRAM     29095    code in IRAM    
+. Code in flash (default, ICACHE_FLASH_ATTR), used 410000 / 1048576 bytes (39%)
+║   SEGMENT  BYTES    DESCRIPTION
+╚══ IROM     410000   code in flash   
+  2025-05-01 - ESP_Gaszaehler_V1_98_Core312_DST
+  . Variables and constants in RAM (global, static), used 37368 / 80192 bytes (46%)
+  ║   SEGMENT  BYTES    DESCRIPTION
+  ╠══ DATA     1552     initialized variables
+  ╠══ RODATA   4168     constants
+  ╚══ BSS      31648    zeroed variables
+  . Instruction RAM (IRAM_ATTR, ICACHE_RAM_ATTR), used 61863 / 65536 bytes (94%)
+  ║   SEGMENT  BYTES    DESCRIPTION
+  ╠══ ICACHE   32768    reserved space for flash instruction cache
+  ╚══ IRAM     29095    code in IRAM
+  . Code in flash (default, ICACHE_FLASH_ATTR), used 410156 / 1048576 bytes (39%)
+  ║   SEGMENT  BYTES    DESCRIPTION
+  ╚══ IROM     410156   code in flash
   2023-11-05 - ESP_Gaszaehler_V1_97_Core312_WPS
   . Variables and constants in RAM (global, static), used 37368 / 80192 bytes (46%)
   ║   SEGMENT  BYTES    DESCRIPTION

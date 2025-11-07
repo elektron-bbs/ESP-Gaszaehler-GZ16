@@ -254,30 +254,32 @@ int LastDayOfMonth (int monat, int jahr) {
 }
 
 void checkDst() {
-  // check the beginn of daylight saving time
-  if (weekday() == 1 && month() == 3 && day() >= 25 && day() <= 31 && hour() == 2 && DST == false) {
-    // setclockto 3 am;
-    adjustTime(3600); // Adjust system time by adding the adjustment value
-    numberLogLinesDay = 23;
-    DST = true;
-    EEPROM_write_boolean(EEPROM_ADDR_DST, DST);      // write boolean at address
-    DS1307_setTime();                                // set date and time to DS1307
-    appendLogFile(F("Summertime"));
-    if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-      Serial.println(F("Switch to summertime!"));
+  if (weekday() == 1 && day() >= 25 && day() <= 31) {
+    // check the beginn of daylight saving time
+    if (month() == 3 && hour() == 2 && DST == false) {
+      // setclockto 3 am;
+      adjustTime(3600); // Adjust system time by adding the adjustment value
+      numberLogLinesDay = 23;
+      DST = true;
+      EEPROM_write_boolean(EEPROM_ADDR_DST, DST);      // write boolean at address
+      DS1307_setTime();                                // set date and time to DS1307
+      appendLogFile(F("Summertime"));
+      if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
+        Serial.println(F("Switch to summertime!"));
+      }
     }
-  }
-  // check the end of daylight saving time
-  if (weekday() == 1 && month() == 10 && day() >= 25 && day() <= 31 && hour() == 3 && DST == true) {
-    // setclockto 2 am;
-    adjustTime(-3600); // Adjust system time by adding the adjustment value
-    numberLogLinesDay = 25;
-    DST = false;
-    EEPROM_write_boolean(EEPROM_ADDR_DST, DST);      // write boolean at address
-    DS1307_setTime();                                // set date and time to DS1307
-    appendLogFile(F("Normaltime"));
-    if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
-      Serial.println(F("It is Normaltime!"));
+    // check the end of daylight saving time
+    if (month() == 10 && hour() == 3 && DST == true) {
+      // setclockto 2 am;
+      adjustTime(-3600); // Adjust system time by adding the adjustment value
+      numberLogLinesDay = 25;
+      DST = false;
+      EEPROM_write_boolean(EEPROM_ADDR_DST, DST);      // write boolean at address
+      DS1307_setTime();                                // set date and time to DS1307
+      appendLogFile(F("Normaltime"));
+      if (SerialOutput == 1) {    // serielle Ausgabe eingeschaltet
+        Serial.println(F("It is Normaltime!"));
+      }
     }
   }
 }

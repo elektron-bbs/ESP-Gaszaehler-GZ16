@@ -1,3 +1,5 @@
+const char* strDir[6] PROGMEM = {"", "css", "htm", "log", "pic", "pdf"};
+
 // ############################## Statistik ##############################
 void SiteStatistik() {
 #ifdef DEBUG_OUTPUT_SERIAL_WIFI
@@ -1380,12 +1382,9 @@ void SiteFiles()  {
                   "<th class=\"c\">Größe</th>"
                   "</tr>"));
 
-  sResponse += listDirectories("");
-  sResponse += listDirectories("css");
-  sResponse += listDirectories("htm");
-  sResponse += listDirectories("log");
-  sResponse += listDirectories("pic");
-  sResponse += listDirectories("pdf");
+  for (uint8_t c = 0; c < 6; c++) {
+    sResponse += listDirectories(strDir[c]);
+  }
 
   FSInfo fs_info;
   LittleFS.info(fs_info);

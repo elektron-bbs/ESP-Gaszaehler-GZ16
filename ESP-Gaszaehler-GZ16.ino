@@ -8,7 +8,7 @@
 #include <Wire.h>
 #include <SPI.h>
 
-#define HW_VERSION_1                // Version 1: ESP-12E, auskommentieren für Version 2 (MR) mit NodeMCU
+#define HW_VERSION_1                // Version 1 (UB): ESP-12E, auskommentieren für Version 2 (MR) mit NodeMCU
 
 #ifdef HW_VERSION_1
 ADC_MODE(ADC_VCC);                  // vcc read
@@ -18,7 +18,7 @@ const float ADC_DIV = 190.0;        // Divisor für Batteriespannung bei HW-Vers
 
 #define HOSTNAME                    "GZ16-ESP-" // Hostname, 3 Byte Chip-ID werden angehangen
 #define VERSION                     1
-#define BUILD                       97
+#define BUILD                       98
 //#define DEBUG_OUTPUT_SERIAL
 //#define DEBUG_OUTPUT_SERIAL_DS1307
 //#define DEBUG_OUTPUT_SERIAL_EEPROM
@@ -443,16 +443,18 @@ void loop ( void ) {
   // Perform regular checks, 1 time/sec
   if (second() != sec_old) {
     sec_old = second();
-    if (sec_old % 5 == 0) {
-      // print RAM-Info, see https://arduino-esp8266.readthedocs.io/en/latest/libraries.html#esp-specific-apis
-//      Serial.print(F("ESP8266 FreeHeap:          "));
-//      Serial.println(ESP.getFreeHeap());         // free heap size.
-//      Serial.print(F("ESP8266 MaxFreeBlockSize:  "));
-//      Serial.println(ESP.getMaxFreeBlockSize()); // largest contiguous free RAM block in the heap, useful for checking heap fragmentation. NOTE: Maximum malloc() -able block will be smaller due to memory manager overheads.
-//      Serial.print(F("ESP8266 HeapFragmentation: "));
-//      Serial.println(ESP.getHeapFragmentation()); // fragmentation metric (0% is clean, more than ~50% is not harmless)
-      // END print RAM-Info
-    }
+    /*
+        if (sec_old % 5 == 0) {
+          // print RAM-Info, see https://arduino-esp8266.readthedocs.io/en/latest/libraries.html#esp-specific-apis
+          Serial.print(F("ESP8266 FreeHeap:          "));
+          Serial.println(ESP.getFreeHeap());         // free heap size.
+          Serial.print(F("ESP8266 MaxFreeBlockSize:  "));
+          Serial.println(ESP.getMaxFreeBlockSize()); // largest contiguous free RAM block in the heap, useful for checking heap fragmentation. NOTE: Maximum malloc() -able block will be smaller due to memory manager overheads.
+          Serial.print(F("ESP8266 HeapFragmentation: "));
+          Serial.println(ESP.getHeapFragmentation()); // fragmentation metric (0% is clean, more than ~50% is not harmless)
+          // END print RAM-Info
+        }
+    */
     if (Button_Press_Count > 0) {
       Button_Press_Time++;                            // increase timer
       digitalWrite(LED_red, !digitalRead(LED_red));   // LED toggle
