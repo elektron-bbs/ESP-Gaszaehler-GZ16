@@ -18,7 +18,7 @@ const float ADC_DIV = 190.0;        // Divisor für Batteriespannung bei HW-Vers
 
 #define HOSTNAME                    "GZ16-ESP-" // Hostname, 3 Byte Chip-ID werden angehangen
 #define VERSION                     1
-#define BUILD                       98
+#define BUILD                       99
 //#define DEBUG_OUTPUT_SERIAL
 //#define DEBUG_OUTPUT_SERIAL_DS1307
 //#define DEBUG_OUTPUT_SERIAL_EEPROM
@@ -120,6 +120,7 @@ boolean ConnectWifi = false;
 String OwnStationHostname = HOSTNAME;
 int reconnCount;                          // Counter Reconnects
 int reconnCountOld;                       // Counter Reconnects
+int lostConnCount;                        // Counter Reconnects
 unsigned long ulWifiRxBytes;              // Count Received Bytes
 unsigned long ulWifiTxBytes;              // Count Transmitted Bytes
 byte webtype = 255;
@@ -528,8 +529,15 @@ void loop ( void ) {
           // WiFi.begin(essid.c_str(), epass.c_str());
         }
 #ifdef DEBUG_OUTPUT_SERIAL_WIFI
-        Serial.print(F("WiFi-Status: ")); Serial.print(WiFi.status()); Serial.print(F(" ("));  Serial.print(strWifiStatus[WiFi.status()]); Serial.println(')'); // 3 = connected
+        Serial.print(F("WiFi-Status loop: ")); Serial.print(WiFi.status());
+        Serial.print(F(" ("));  Serial.print(strWifiStatus[WiFi.status()]); Serial.print(") "); // 3 = connected
+        Serial.println(lostConnCount);
 #endif
+        lostConnCount++;
+        if (lostConnCount > 60) {
+          lostConnCount = 0;
+          connectWifiBestRssi(); // connect to AP with best RSSI
+        }
       } else {                                    // Wifi connected
         if (wpsSuccess == true) {
           String qssid = WiFi.SSID();
@@ -567,6 +575,7 @@ void loop ( void ) {
           ConnectWifi = true;                     // nur einmal ausführen
           digitalWrite(LED_green, LOW) ;          // LED ein
           reconnCount += 1;                       // Counter Reconnects erhöhen
+          lostConnCount = 0;
           String logtext = F("Wifi connected to ");
           logtext += WiFi.SSID();
           logtext += F(", channel ");

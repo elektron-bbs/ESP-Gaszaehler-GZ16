@@ -632,8 +632,9 @@ void SiteSetupWifi()  {
   Serial.print(F("Anzahl Argumente(countargs): "));
   Serial.println(countargs);
 #endif
-  if (submit != "wps") {   // bei WPS nicht scannen
-  //if (countargs == 0 || submit == "rescan") {   // erster Aufruf ohne Argumente
+  //if (submit != "wps" && submit != "connect") {   // bei WPS nicht scannen
+  //if (submit != "wps") {   // bei WPS nicht scannen
+  if (countargs == 0 || submit == "rescan") {   // erster Aufruf ohne Argumente
 #ifdef DEBUG_OUTPUT_SERIAL_WIFI
     Serial.println(F("Scanne Netzwerke..."));
 #endif
@@ -1016,7 +1017,7 @@ void SiteSetupWifi()  {
                    "<td>"
                    "<input name=\"sn\" aria-label=\"Subnetz\" type=\"text\" id=\"sn\"  maxlength=\"15\" value=\"");
     if (edhcp == false) {                             // DHCP aus
-      ipadr = esnm;                                   // eigene Subnetzkaske übernehmen
+      ipadr = esnm;                                   // eigene Subnetzmaske übernehmen
     } else {                                          // DHCP ein
       ipadr = WiFi.subnetMask();
     }
@@ -1039,7 +1040,7 @@ void SiteSetupWifi()  {
     sResponse += F(" ungültig!</td></tr>");
   }
   // Serial.println(F("Delete the last scan result from memory."));
-  WiFi.scanDelete(); // Delete the last scan result from memory.
+  // WiFi.scanDelete(); // Delete the last scan result from memory.
   // Website /setuplan.htm HTTP TX Bytes: 4389, Free Heap: 23.33 kB
   // Website /setuplan.htm HTTP TX Bytes: 4385, Free Heap: 24.08 kB
   // Website /setuplan.htm HTTP TX Bytes: 4812, Free Heap: 22.77 kB

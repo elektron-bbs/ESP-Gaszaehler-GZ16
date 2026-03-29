@@ -64,10 +64,12 @@ void connectWifiBestRssi() {
     }
   }
   if (usedChannel == 0) { // Network not found
+    String logtext = F("Wifi network ");
+    logtext += essid;
+    logtext += F(" not found");
+    appendLogFile(logtext);
 #ifdef DEBUG_OUTPUT_SERIAL_WIFI
-    Serial.print(F("Network "));
-    Serial.print(essid);
-    Serial.println(F(" not found!"));
+    Serial.println(logtext);
 #endif
   } else {
 #ifdef DEBUG_OUTPUT_SERIAL_WIFI
@@ -211,7 +213,7 @@ bool testWifi(void) {
     }
     digitalWrite(LED_green, !digitalRead(LED_green));     // LED toggle
 #ifdef DEBUG_OUTPUT_SERIAL_WIFI
-    Serial.print(F("WiFi-Status: ")); Serial.print(WiFi.status()); Serial.print(F(" ("));  Serial.print(strWifiStatus[WiFi.status()]); Serial.println(')'); // 3 = connected
+    Serial.print(F("WiFi-Status testWifi: ")); Serial.print(WiFi.status()); Serial.print(F(" ("));  Serial.print(strWifiStatus[WiFi.status()]); Serial.println(')'); // 3 = connected
 #endif
     c++;
     delay(500);
